@@ -1,0 +1,28 @@
+# Юнит для автоматического резервного копирования homelab.
+# Установка:
+#   sudo cp homelab-backup.service homelab-backup.timer /etc/systemd/system/
+#   sudo mkdir -p /etc/systemd/system/homelab-backup.service.d
+#   echo -e "[Service]\nEnvironment=BACKUP_DIR=/mnt/raid/backups\nEnvironment=BACKUP_RETENTION_DAYS=14" | sudo tee /etc/systemd/system/homelab-backup.service.d/override.conf
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now homelab-backup.timer
+#
+# Замените /path/to/homelab на реальный путь к репозиторию.
+
+[Unit]
+Description=Homelab full backup (repo + Docker volumes)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/homelab
+Environment=COMPOSE_PROJECT_NAME=homelab
+Environment=BACKUP_DIR=/backup/homelab
+Environment=BACKUP_RETENTION_DAYS=14
+ExecStart=/path/to/homelab/scripts/backup.sh
+# Логи в journal
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

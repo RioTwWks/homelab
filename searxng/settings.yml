@@ -1,0 +1,22 @@
+# SearxNG config for homelab (profile "search").
+# See https://docs.searxng.org/admin/settings/settings_search.html
+use_default_settings: true
+
+# Required: change from default or SearxNG refuses to start
+server:
+  secret_key: "homelab-searxng-secret-change-me-if-public"
+
+# Allow JSON API (required for moltbot-api web search). Without this, ?format=json returns 403.
+search:
+  formats:
+    - html
+    - json
+
+# Disable engines that fail in Docker (no reverse DNS, etc.)
+engines:
+  - name: radio browser
+    inactive: true
+  - name: ahmia
+    inactive: true
+  - name: torch
+    inactive: true

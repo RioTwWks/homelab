@@ -1,0 +1,25 @@
+# systemd user service: Media Executor Kiosk (фоновый сервис для Moltbot — YouTube, VK, Kodi).
+# Установка:
+#   mkdir -p ~/.config/systemd/user
+#   cp scripts/media-executor-kiosk.service ~/.config/systemd/user/
+#   # отредактируйте WorkingDirectory и ExecStart при другом пути к homelab или другом venv (по умолчанию ~/.venvs/media)
+#   systemctl --user daemon-reload
+#   systemctl --user enable media-executor-kiosk.service
+#   systemctl --user start media-executor-kiosk.service
+# Логи: journalctl --user -u media-executor-kiosk.service -f
+
+[Unit]
+Description=Media Executor Kiosk (Moltbot media: YouTube, VK, Kodi)
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+Environment=DISPLAY=:0
+WorkingDirectory=/home/ivan/homelab
+ExecStart=/home/ivan/.venvs/media/bin/python /home/ivan/homelab/scripts/media_executor_kiosk.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

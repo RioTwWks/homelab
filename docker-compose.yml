@@ -1,0 +1,385 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - qdrant_data:/qdrant/storage
+    ports:
+      - "6333:6333"
+    restart: unless-stopped
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    restart: unless-stopped
+
+  # Optional: Home Assistant (heavy). Enable via: docker compose --profile ha up -d
+  # Используем bridge + порт 8123 (с network_mode: host на части систем порт не открывается)
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - homeassistant_config:/config
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+    ports:
+      - "8123:8123"
+    restart: unless-stopped
+    profiles: ["ha"]
+
+  moltbot-api:
+    build:
+      context: ./moltbot_api
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL_FAST=${OLLAMA_MODEL_FAST:-qwen3:4b}
+      - OLLAMA_MODEL_CHAT=${OLLAMA_MODEL_CHAT:-qwen3:8b}
+      - OLLAMA_TIMEOUT_SECONDS=${OLLAMA_TIMEOUT_SECONDS:-240}
+      - OLLAMA_TEMPERATURE=${OLLAMA_TEMPERATURE:-0.2}
+      - OLLAMA_NUM_PREDICT_FAST=${OLLAMA_NUM_PREDICT_FAST:-160}
+      - OLLAMA_NUM_PREDICT_CHAT=${OLLAMA_NUM_PREDICT_CHAT:-320}
+      - OLLAMA_THINK=${OLLAMA_THINK:-false}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
+      - MQTT_URL=${MQTT_URL:-mqtt://mqtt:1883}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-}
+      - YANDEX_WEATHER_API_KEY=${YANDEX_WEATHER_API_KEY:-}
+      - NEWS_RSS_SOURCES=${NEWS_RSS_SOURCES:-}
+      - NEWS_CACHE_TTL_SECONDS=${NEWS_CACHE_TTL_SECONDS:-900}
+      - NEWS_ITEM_SUMMARY_CHARS=${NEWS_ITEM_SUMMARY_CHARS:-180}
+      - NEWS_MAX_ITEMS_FACTS=${NEWS_MAX_ITEMS_FACTS:-15}
+      - WEATHER_CACHE_TTL_SECONDS=${WEATHER_CACHE_TTL_SECONDS:-600}
+      - DEFAULT_WEATHER_CITY=${DEFAULT_WEATHER_CITY:-}
+      - DEFAULT_WEATHER_DISTRICT=${DEFAULT_WEATHER_DISTRICT:-}
+      - ALLOW_INTERNET_TOOLS=${ALLOW_INTERNET_TOOLS:-true}
+      - WEB_SEARCH_PROVIDER=${WEB_SEARCH_PROVIDER:-off}
+      - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-}
+      - WEB_SEARCH_MAX_RESULTS=${WEB_SEARCH_MAX_RESULTS:-6}
+      - WEB_SEARCH_LANGUAGE=${WEB_SEARCH_LANGUAGE:-ru}
+      - WEB_SEARCH_CACHE_TTL_SECONDS=${WEB_SEARCH_CACHE_TTL_SECONDS:-21600}
+      - WEB_SEARCH_TIME_RANGE=${WEB_SEARCH_TIME_RANGE:-}
+      - MEDIA_API_BASE_URL=${MEDIA_API_BASE_URL:-http://media-api:8090}
+      - HOME_ASSISTANT_URL=${HOME_ASSISTANT_URL:-}
+      - HOME_ASSISTANT_TOKEN=${HOME_ASSISTANT_TOKEN:-}
+      - QBITTORRENT_WEB_URL=${QBITTORRENT_WEB_URL:-http://localhost:18084}
+      - STREMIO_WEB_URL=${STREMIO_WEB_URL:-stremio://}
+    ports:
+      - "18080:8080"
+    depends_on:
+      - redis
+      - qdrant
+      - mqtt
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  media-api:
+    build:
+      context: ./media_api
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+      - MEDIA_EXECUTOR_URL=${MEDIA_EXECUTOR_URL:-}
+    ports:
+      - "8090:8090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Optional: Moltbot UI — простой web-интерфейс (чат + кнопки) к moltbot-api.
+  # Запуск: docker compose --profile ui up -d moltbot-ui
+  # UI: http://localhost:18079 (MOLTBOT_UI_PORT)
+  moltbot-ui:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - moltbot-api
+    ports:
+      - "${MOLTBOT_UI_PORT:-18079}:80"
+    volumes:
+      - ./moltbot-ui.nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./moltbot_ui:/usr/share/nginx/html:ro
+    profiles: ["ui"]
+
+  # Optional: Nextcloud — файловое хранилище (веб, синхронизация, приложения). Профиль: storage
+  nextcloud:
+    image: nextcloud:apache
+    restart: unless-stopped
+    ports:
+      - "${NEXTCLOUD_PORT:-18082}:80"
+    volumes:
+      - nextcloud_data:/var/www/html
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+      - REDIS_HOST=redis
+      - MYSQL_HOST=nextcloud_db
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD:-nextcloud}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-localhost 127.0.0.1}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:-}
+    depends_on:
+      nextcloud_db:
+        condition: service_healthy
+    profiles: ["storage"]
+
+  nextcloud_db:
+    image: mariadb:10.11
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-read-only-compressed=OFF
+    restart: unless-stopped
+    volumes:
+      - nextcloud_db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${NEXTCLOUD_DB_ROOT_PASSWORD:-nextcloud_root}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD:-nextcloud}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles: ["storage"]
+
+  # Optional: Immich — фото/видео хранилище (аналог Google Фото). Веб + мобильные приложения. Профиль: photos
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    restart: unless-stopped
+    ports:
+      - "${IMMICH_PORT:-18083}:2283"
+    volumes:
+      - immich_upload:/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+      - UPLOAD_LOCATION=/data
+      - DB_HOSTNAME=immich_db
+      - DB_PORT=5432
+      - DB_USERNAME=${IMMICH_DB_USERNAME:-postgres}
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD:-postgres}
+      - DB_DATABASE_NAME=${IMMICH_DB_DATABASE:-immich}
+      - REDIS_HOST=immich_redis
+      - REDIS_PORT=6379
+    depends_on:
+      immich_db:
+        condition: service_healthy
+      immich_redis:
+        condition: service_started
+    profiles: ["photos"]
+
+  # Распознавание лиц и сцен. Образ ML по умолчанию v1.141.1: тег release ломается (SyntaxError в gunicorn), см. immich-app/immich#22592.
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_ML_VERSION:-v1.141.1}
+    restart: unless-stopped
+    volumes:
+      - immich_ml_cache:/cache
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+    profiles: ["photos"]
+
+  immich_redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    profiles: ["photos"]
+
+  immich_db:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+    restart: unless-stopped
+    volumes:
+      - immich_db_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${IMMICH_DB_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${IMMICH_DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${IMMICH_DB_DATABASE:-immich}
+      - POSTGRES_INITDB_ARGS=--data-checksums
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles: ["photos"]
+
+  # Optional: qBittorrent — загрузка торрентов; папка загрузок как источник в Kodi (фильмы/сериалы/музыка). Профиль: torrents
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    restart: unless-stopped
+    ports:
+      - "${QBITTORRENT_WEB_PORT:-18084}:8080"
+    volumes:
+      - qbittorrent_config:/config
+      - qbittorrent_downloads:/downloads
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+      - PUID=1000
+      - PGID=1000
+      - WEBUI_PORT=8080
+    profiles: ["torrents"]
+
+  # Optional: Stremio Server — стриминг-сервер для веб/десктоп клиента Stremio. Профиль: torrents
+  stremio-server:
+    image: stremio/server:latest
+    restart: unless-stopped
+    ports:
+      # NB: 11470/12470 — дефолтные порты встроенного Stremio Server в Desktop.
+      # Если занять их контейнером, Desktop падает с EADDRINUSE -> initShellComm is not defined.
+      - "${STREMIO_HTTP_PORT:-11480}:11470"
+      - "${STREMIO_HTTPS_PORT:-12480}:12470"
+    environment:
+      - NO_CORS=1
+    profiles: ["torrents"]
+
+  # Optional: TorrServer — торрент-стриминг. Профиль: torrents
+  # UI/HTTP API: http://localhost:18086
+  torrserver:
+    image: ghcr.io/dhvcc/torrserver:latest
+    restart: unless-stopped
+    environment:
+      - TS_PORT=5665
+      - TS_DONTKILL=1
+      - TS_HTTPAUTH=0
+      - TS_CONF_PATH=/opt/ts/config
+      - TS_TORR_DIR=/opt/ts/torrents
+      - TS_DOWNLOAD_DIR=/downloads
+    ports:
+      - "${TORRSERVER_PORT:-18086}:5665"
+    volumes:
+      - torrserver_cache:/opt/ts/torrents
+      - torrserver_config:/opt/ts/config
+      # чтобы TorrServer мог стримить уже скачанные торренты (если используешь qBittorrent)
+      - qbittorrent_downloads:/downloads:ro
+    profiles: ["torrents"]
+
+  # Optional: Jacred — парсер/поиск торрентов. Профиль: torrents
+  # Web/API: http://localhost:18087
+  jacred:
+    image: ghcr.io/pavelpikta/jacred-fdb:latest
+    restart: unless-stopped
+    ports:
+      - "${JACRED_PORT:-18087}:9117"
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+    volumes:
+      - jacred_config:/app/config
+      - jacred_data:/app/Data
+    profiles: ["torrents"]
+
+  # Optional: GitLab CE + Grafana (CI/CD, репозитории, пайплайны). Профиль: gitlab
+  # Запуск: docker compose --profile gitlab up -d
+  # Web: GITLAB_EXTERNAL_URL (по умолчанию http://localhost:18090), SSH: GITLAB_SSH_PORT (2222), Registry: GITLAB_REGISTRY_PORT (5005)
+  gitlab:
+    image: gitlab/gitlab-ce:18.5.4-ce.0
+    container_name: gitlab
+    hostname: ${GITLAB_HOSTNAME:-gitlab}
+    restart: unless-stopped
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url '${GITLAB_EXTERNAL_URL:-http://localhost:18090}'
+        gitlab_rails['gitlab_shell_ssh_port'] = ${GITLAB_SSH_PORT:-2222}
+        nginx['listen_port'] = 80
+        registry_external_url '${GITLAB_REGISTRY_EXTERNAL_URL:-http://localhost:5005}'
+        gitlab_rails['registry_enabled'] = true
+        registry['enable'] = true
+        registry_nginx['listen_port'] = 5005
+        registry_nginx['listen_https'] = false
+        registry_nginx['listen_addresses'] = ['*']
+        gitlab_rails['trusted_proxies'] = ['172.16.0.0/12', '192.168.0.0/16']
+        gitlab_rails['time_zone'] = '${TZ:-Europe/Moscow}'
+        gitlab_rails['artifacts_enabled'] = true
+        gitlab_rails['artifacts_path'] = "/var/opt/gitlab/gitlab-rails/shared/artifacts"
+        gitlab_rails['artifacts_object_store_enabled'] = false
+        gitlab_rails['default_artifacts_expire_in'] = "30 days"
+        prometheus_monitoring['enable'] = true
+        prometheus['enable'] = true
+        prometheus['listen_address'] = '0.0.0.0:9090'
+    ports:
+      - "${GITLAB_HTTP_PORT:-18090}:80"
+      - "${GITLAB_SSH_PORT:-2222}:22"
+      - "${GITLAB_REGISTRY_PORT:-5005}:5005"
+      - "${GITLAB_PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+    shm_size: '256m'
+    profiles: ["gitlab"]
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-18091}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - gitlab
+    profiles: ["gitlab"]
+
+  # GitLab Runner — выполняет пайплайны (Docker executor). Конфиг: gitlab-runner-config/config.toml
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: unless-stopped
+    depends_on:
+      - gitlab
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./gitlab-runner-config:/etc/gitlab-runner
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+    extra_hosts:
+      - "gitlab:host-gateway"
+    profiles: ["gitlab"]
+
+  # Optional: SearxNG for web search. Enable via: docker compose --profile search up -d
+  # Then set WEB_SEARCH_PROVIDER=searxng and SEARXNG_BASE_URL=http://searxng:8080 in .env for moltbot-api
+  searxng:
+    image: searxng/searxng:latest
+    hostname: searxng
+    ports:
+      - "18081:8080"
+    volumes:
+      - ./searxng:/etc/searxng
+      - searxng_data:/var/cache/searxng
+    environment:
+      - SEARXNG_BASE_URL=${SEARXNG_PUBLIC_URL:-http://localhost:18081}
+    restart: unless-stopped
+    profiles: ["search"]
+
+volumes:
+  redis_data:
+  qdrant_data:
+  mosquitto_data:
+  mosquitto_log:
+  homeassistant_config:
+  nextcloud_data:
+  nextcloud_db_data:
+  immich_upload:
+  immich_db_data:
+  immich_ml_cache:
+  qbittorrent_config:
+  qbittorrent_downloads:
+  searxng_data:
+  torrserver_cache:
+  torrserver_config:
+  jacred_config:
+  jacred_data:
+  gitlab_config:
+  gitlab_logs:
+  gitlab_data:
+  grafana_data:

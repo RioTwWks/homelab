@@ -1,0 +1,76 @@
+Starting whisper-server at http://127.0.0.1:8099
+Model: /home/ivan/.local/src/whisper.cpp/models/ggml-large-v3.bin
+Language: ru
+Threads: 10
+Best-of: 1
+Beam size: 1
+No timestamps: true
+
+whisper_init_from_file_with_params_no_state: loading model from '/home/ivan/.local/src/whisper.cpp/models/ggml-large-v3.bin'
+whisper_init_with_params_no_state: use gpu    = 1
+whisper_init_with_params_no_state: flash attn = 1
+whisper_init_with_params_no_state: gpu_device = 0
+whisper_init_with_params_no_state: dtw        = 0
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = AMD Radeon RX 5700 XT (RADV NAVI10) (radv) | uma: 0 | fp16: 1 | bf16: 0 | warp size: 32 | shared memory: 65536 | int dot: 0 | matrix cores: none
+whisper_init_with_params_no_state: devices    = 2
+whisper_init_with_params_no_state: backends   = 2
+whisper_model_load: loading model
+whisper_model_load: n_vocab       = 51866
+whisper_model_load: n_audio_ctx   = 1500
+whisper_model_load: n_audio_state = 1280
+whisper_model_load: n_audio_head  = 20
+whisper_model_load: n_audio_layer = 32
+whisper_model_load: n_text_ctx    = 448
+whisper_model_load: n_text_state  = 1280
+whisper_model_load: n_text_head   = 20
+whisper_model_load: n_text_layer  = 32
+whisper_model_load: n_mels        = 128
+whisper_model_load: ftype         = 1
+whisper_model_load: qntvr         = 0
+whisper_model_load: type          = 5 (large v3)
+whisper_model_load: adding 1609 extra tokens
+whisper_model_load: n_langs       = 100
+whisper_model_load:      Vulkan0 total size =  3094.36 MB
+whisper_model_load: model size    = 3094.36 MB
+whisper_backend_init_gpu: device 0: Vulkan0 (type: 1)
+whisper_backend_init_gpu: found GPU device 0: Vulkan0 (type: 1, cnt: 0)
+whisper_backend_init_gpu: using Vulkan0 backend
+whisper_init_state: kv self size  =   83.89 MB
+whisper_init_state: kv cross size =  251.66 MB
+whisper_init_state: kv pad  size  =    7.86 MB
+whisper_init_state: compute buffer (conv)   =   37.69 MB
+whisper_init_state: compute buffer (encode) =   55.35 MB
+whisper_init_state: compute buffer (cross)  =   47.67 MB
+whisper_init_state: compute buffer (decode) =  100.04 MB
+
+system_info: n_threads = 10 / 12 | WHISPER : COREML = 0 | OPENVINO = 0 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | AVX512 = 1 | AVX512_VBMI = 1 | AVX512_VNNI = 1 | AVX512_BF16 = 1 | OPENMP = 1 | REPACK = 1 | 
+
+operator(): processing 'send.wav' (8236 samples, 0.5 sec), 10 threads, 1 processors, lang = ru, task = transcribe, timestamps = 0 ...
+
+
+system_info: n_threads = 10 / 12 | WHISPER : COREML = 0 | OPENVINO = 0 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | AVX512 = 1 | AVX512_VBMI = 1 | AVX512_VNNI = 1 | AVX512_BF16 = 1 | OPENMP = 1 | REPACK = 1 | 
+
+operator(): processing 'send.wav' (9280 samples, 0.6 sec), 10 threads, 1 processors, lang = ru, task = transcribe, timestamps = 0 ...
+
+
+whisper_print_timings:     load time =  9006.80 ms
+whisper_print_timings:     fallbacks =   0 p /   0 h
+whisper_print_timings:      mel time =     4.82 ms
+whisper_print_timings:   sample time =     3.10 ms /     1 runs (     3.10 ms per run)
+whisper_print_timings:   encode time =  1010.46 ms /     2 runs (   505.23 ms per run)
+whisper_print_timings:   decode time =    56.23 ms /     6 runs (     9.37 ms per run)
+whisper_print_timings:   batchd time =     0.00 ms /     1 runs (     0.00 ms per run)
+whisper_print_timings:   prompt time =    87.35 ms /    86 runs (     1.02 ms per run)
+whisper_print_timings:    total time = 29260.19 ms
+
+whisper server listening at http://127.0.0.1:8099
+
+Received request: send.wav
+Successfully loaded send.wav
+Running whisper.cpp inference on send.wav
+Received request: send.wav
+Successfully loaded send.wav
+Running whisper.cpp inference on send.wav
+
+Caught signal 2, shutting down gracefully...

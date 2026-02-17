@@ -1,0 +1,23 @@
+# Пример override для хранения данных Nextcloud и Immich на RAID.
+#
+# Использование:
+#   1. Разверните RAID и смонтируйте в /mnt/raid (см. docs/storage-raid.md).
+#   2. Создайте каталоги и назначьте владельцев:
+#        sudo mkdir -p /mnt/raid/nextcloud /mnt/raid/immich
+#        sudo chown 33:33 /mnt/raid/nextcloud
+#        sudo chown root:root /mnt/raid/immich
+#   3. Скопируйте этот файл в docker-compose.override.yml:
+#        cp docker-compose.raid.example.yml docker-compose.override.yml
+#   4. Запустите: docker compose --profile storage --profile photos up -d
+#
+# Данные Nextcloud и Immich будут в /mnt/raid/nextcloud и /mnt/raid/immich.
+
+services:
+  nextcloud:
+    volumes:
+      - /mnt/raid/nextcloud:/var/www/html
+
+  immich-server:
+    volumes:
+      - /mnt/raid/immich:/data
+      - /etc/localtime:/etc/localtime:ro

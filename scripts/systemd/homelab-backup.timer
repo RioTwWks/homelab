@@ -1,0 +1,13 @@
+# Таймер: запуск бэкапа раз в день в 03:00.
+# После копирования юнитов: sudo systemctl enable --now homelab-backup.timer
+# Проверить: systemctl list-timers homelab-backup.timer
+
+[Unit]
+Description=Run homelab backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=yes
+
+[Install]
+WantedBy=timers.target

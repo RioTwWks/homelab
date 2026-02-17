@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#050910" />
+    <title>Moltbot</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+
+    <!-- animated bg orbs -->
+    <div class="bg-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
+    <div class="app">
+      <!-- ─── Topbar ─── -->
+      <header class="topbar">
+        <button type="button" id="sidebarToggle" class="topbar-hamburger" aria-label="Меню">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+        <div class="brand">
+          <div class="logo">MB</div>
+          <div class="brand-text">
+            <div class="title">Moltbot <span id="connDot" class="conn-dot"></span></div>
+            <div class="subtitle">voice-controlled homelab hub</div>
+          </div>
+        </div>
+        <div class="topbar-tabs" id="topbarTabs" aria-hidden="true">
+          <button type="button" class="topbar-tab active" data-view="chat">Чат</button>
+          <button type="button" class="topbar-tab" data-view="dashboard">Дашборд</button>
+        </div>
+        <div class="topbar-right">
+          <button type="button" id="themeToggle" class="btn-theme" aria-label="Переключить тему" title="Светлая / тёмная тема">
+            <span class="theme-icon theme-icon-dark" aria-hidden="true">🌙</span>
+            <span class="theme-icon theme-icon-light" aria-hidden="true">☀️</span>
+          </button>
+          <a class="link" href="/docs" target="_blank" rel="noreferrer">API docs</a>
+        </div>
+      </header>
+      <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+      <!-- ─── Sidebar ─── -->
+      <aside class="sidebar" id="sidebar">
+        <!-- Sessions -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">💬</span>
+            <div class="card-title">Сессии</div>
+          </div>
+          <div id="sessionList" class="session-list"></div>
+          <button id="newSession" class="btn-new-session">+ новая сессия</button>
+          <label class="field" style="margin-top:8px">
+            <div class="field-label">mode</div>
+            <select id="mode" class="input">
+              <option value="auto" selected>auto</option>
+              <option value="fast">fast</option>
+              <option value="chat">chat</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Quick commands -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">⚡</span>
+            <div class="card-title">Команды</div>
+          </div>
+          <div class="chips">
+            <button class="chip" data-text="Какая погода сейчас?">погода</button>
+            <button class="chip" data-text="Какие последние новости? 5 пунктов.">новости</button>
+            <button class="chip" data-text="поставь таймер на 5 минут">таймер</button>
+            <button class="chip" data-text="ютуб">ютуб</button>
+            <button class="chip" data-text="пауза">пауза</button>
+            <button class="chip" data-text="включи коди">kodi</button>
+            <button class="chip" data-text="открой торренты">торренты</button>
+          </div>
+        </div>
+
+        <!-- HA scenes -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">🏠</span>
+            <div class="card-title">Умный дом</div>
+          </div>
+          <div class="chips">
+            <button class="chip" data-text="включи свет в гостиной">💡 гостиная</button>
+            <button class="chip" data-text="выключи свет">выкл свет</button>
+            <button class="chip" data-text="включи свет в кухне">💡 кухня</button>
+            <button class="chip" data-text="температура 22">🌡 22°</button>
+            <button class="chip" data-text="режим кино">🎬 кино</button>
+            <button class="chip" data-text="режим сон">🌙 сон</button>
+          </div>
+        </div>
+
+        <!-- Debug -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-icon">🔧</span>
+            <div class="card-title">Отладка</div>
+          </div>
+          <label class="field field-row">
+            <input id="showMeta" type="checkbox" checked />
+            <span style="font-size:11px">intent / timings</span>
+          </label>
+          <label class="field field-row">
+            <input id="showSources" type="checkbox" />
+            <span style="font-size:11px">sources</span>
+          </label>
+          <div style="display:flex;gap:4px;margin-top:4px">
+            <button id="clearChat" class="btn btn-secondary btn-sm" style="flex:1">Очистить</button>
+            <button id="clearAll" class="btn btn-secondary btn-sm" style="flex:1">Удалить всё</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ─── Chat (center) ─── -->
+      <main class="main main-chat">
+        <div id="chat" class="chat"></div>
+        <form id="composer" class="composer">
+          <input
+            id="text"
+            class="composer-input"
+            placeholder="Напиши команду или вопрос…"
+            autocomplete="off"
+          />
+          <button type="button" id="micBtn" class="btn-mic" title="Голосовой ввод">🎤</button>
+          <button type="submit" class="btn btn-primary">→</button>
+        </form>
+        <div id="status" class="status-bar"></div>
+      </main>
+
+      <!-- ─── Right panel: дашборд + статусы в одной колонке ─── -->
+      <aside class="right-panel">
+        <div class="right-panel-scroll">
+          <div id="dashboardRoot" class="dashboard-root">
+            <div id="dashboardGrid" class="dashboard-content"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-icon">📡</span><div class="card-title">Сервисы API</div></div>
+            <div id="statusGrid" class="status-grid">
+              <div class="status-placeholder">Загрузка…</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-icon">🧠</span><div class="card-title">Модели LLM</div></div>
+            <div id="modelsInfo" class="status-placeholder">—</div>
+          </div>
+          <div class="dashboard-footer-wrap">
+            <button id="refreshRightPanel" class="btn btn-secondary btn-sm">Обновить</button>
+            <span id="dashboardFooter" class="dashboard-footer"></span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toasts" class="toast-container"></div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

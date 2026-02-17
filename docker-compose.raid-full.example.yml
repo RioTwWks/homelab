@@ -1,0 +1,65 @@
+# Пример override: ВСЕ данные Docker (тома) на RAID — избыточность для всей системы, как для файлов и фото.
+#
+# Использование:
+#   1. Разверните RAID и смонтируйте в /mnt/raid (docs/storage-raid.md).
+#   2. Создайте каталоги и права:
+#        sudo mkdir -p /mnt/raid/docker/{redis_data,qdrant_data,mosquitto_data,mosquitto_log,homeassistant_config,\
+#          nextcloud_data,nextcloud_db_data,immich_upload,immich_db_data,immich_ml_cache,\
+#          qbittorrent_config,qbittorrent_downloads,searxng_data}
+#        sudo chown 33:33 /mnt/raid/docker/nextcloud_data
+#        sudo chown -R 999:999 /mnt/raid/docker/redis_data
+#        sudo chown -R 1000:1000 /mnt/raid/docker/qdrant_data
+#        (остальные — root или по необходимости после первого запуска)
+#   3. cp docker-compose.raid-full.example.yml docker-compose.override.yml
+#   4. docker compose up -d (с нужными профилями)
+#
+# Автобэкап: настройте scripts/backup.sh и systemd timer (docs/backup.md).
+
+services:
+  redis:
+    volumes:
+      - /mnt/raid/docker/redis_data:/data
+
+  qdrant:
+    volumes:
+      - /mnt/raid/docker/qdrant_data:/qdrant/storage
+
+  mqtt:
+    volumes:
+      - /mnt/raid/docker/mosquitto_data:/mosquitto/data
+      - /mnt/raid/docker/mosquitto_log:/mosquitto/log
+
+  homeassistant:
+    volumes:
+      - /mnt/raid/docker/homeassistant_config:/config
+
+  nextcloud:
+    volumes:
+      - /mnt/raid/docker/nextcloud_data:/var/www/html
+
+  nextcloud_db:
+    volumes:
+      - /mnt/raid/docker/nextcloud_db_data:/var/lib/mysql
+
+  immich-server:
+    volumes:
+      - /mnt/raid/docker/immich_upload:/data
+      - /etc/localtime:/etc/localtime:ro
+
+  immich-machine-learning:
+    volumes:
+      - /mnt/raid/docker/immich_ml_cache:/cache
+
+  immich_db:
+    volumes:
+      - /mnt/raid/docker/immich_db_data:/var/lib/postgresql/data
+
+  qbittorrent:
+    volumes:
+      - /mnt/raid/docker/qbittorrent_config:/config
+      - /mnt/raid/docker/qbittorrent_downloads:/downloads
+
+  searxng:
+    volumes:
+      - ./searxng:/etc/searxng
+      - /mnt/raid/docker/searxng_data:/var/cache/searxng

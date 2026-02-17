@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Media Executor Kiosk
+Comment=Фоновый сервис для голосовых команд Moltbot (YouTube, VK, Kodi). Запуск при входе в систему.
+Exec=/home/ivan/.venvs/media/bin/python /home/ivan/homelab/scripts/media_executor_kiosk.py
+Path=/home/ivan/homelab
+Terminal=false
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

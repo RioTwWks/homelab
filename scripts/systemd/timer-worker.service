@@ -1,0 +1,33 @@
+# Systemd unit для timer-worker (проверка и срабатывание таймеров).
+# Установка:
+#   sudo cp scripts/systemd/timer-worker.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now timer-worker.service
+#
+# Проверка:
+#   sudo systemctl status timer-worker
+#   sudo journalctl -u timer-worker -f
+
+[Unit]
+Description=Moltbot timer worker (polls Redis for expired timers)
+After=network-online.target redis.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ivan
+Group=ivan
+WorkingDirectory=/home/ivan/homelab
+# voice_mvp.env загружается самим скриптом (с раскрытием $HOME)
+# Нужен доступ к звуку (ALSA) для воспроизведения уведомлений
+Environment=PULSE_SERVER=unix:/run/user/1000/pulse/native
+Environment=HOME=/home/ivan
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+ExecStart=/home/ivan/.venvs/silero/bin/python /home/ivan/homelab/scripts/timer_worker.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

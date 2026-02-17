@@ -1,0 +1,22 @@
+# Пример конфига GitLab Runner. Скопируйте в config.toml и подставьте токен.
+# Токен: GitLab → Admin → CI/CD → Runners → Register an instance runner (или у существующего runner).
+# Внутри сети homelab GitLab доступен по имени "gitlab" на порту 80.
+
+concurrent = 1
+check_interval = 0
+shutdown_timeout = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = "Docker Runner"
+  url = "http://gitlab"
+  clone_url = "http://gitlab"
+  token = "ВСТАВЬТЕ_ТОКЕН_ИЗ_GITLAB"
+  executor = "docker"
+  [runners.docker]
+    image = "alpine:latest"
+    privileged = true
+    volumes = ["/cache", "/var/run/docker.sock:/var/run/docker.sock"]
+    extra_hosts = ["gitlab:host-gateway", "localhost:host-gateway"]

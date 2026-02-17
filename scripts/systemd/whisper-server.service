@@ -1,0 +1,40 @@
+# Systemd unit для whisper-server (whisper.cpp).
+# Установка:
+#   sudo cp scripts/systemd/whisper-server.service /etc/systemd/system/
+#   sudo mkdir -p /etc/systemd/system/whisper-server.service.d
+#   # Опционально: переопределить переменные окружения
+#   echo -e "[Service]\nEnvironment=WHISPER_SERVER_THREADS=10\nEnvironment=WHISPER_MODEL=$HOME/.local/src/whisper.cpp/models/ggml-medium.bin" | sudo tee /etc/systemd/system/whisper-server.service.d/override.conf
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now whisper-server.service
+#
+# Проверка:
+#   sudo systemctl status whisper-server
+#   curl -sS http://127.0.0.1:8099/health
+#   sudo journalctl -u whisper-server -f
+
+[Unit]
+Description=Whisper.cpp server for voice MVP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Замените /home/ivan на реальный путь к домашней директории пользователя
+User=ivan
+Group=ivan
+# Замените /home/ivan/homelab на реальный путь к репозиторию
+WorkingDirectory=/home/ivan/homelab
+# Загружаем переменные из voice_mvp.env (скрипт сам их читает)
+EnvironmentFile=-/home/ivan/homelab/scripts/voice_mvp.env
+ExecStart=/home/ivan/homelab/scripts/whisper_server_run.sh
+Restart=always
+RestartSec=5
+# Логи в journal
+StandardOutput=journal
+StandardError=journal
+# Ограничения ресурсов (опционально)
+# CPUQuota=200%
+# MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target
