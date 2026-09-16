@@ -71,5 +71,5 @@ jobs:
       - name: Validate compose files
         run: |
           docker compose -f docker-compose.yml config --quiet
-          docker compose -f docker-compose.raid.example.yml config --quiet
-          docker compose -f docker-compose.raid-full.example.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.raid.example.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.raid-full.example.yml config --quiet
