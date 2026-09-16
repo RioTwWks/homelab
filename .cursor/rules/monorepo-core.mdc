@@ -1,0 +1,30 @@
+---
+description: Homelab monorepo core conventions — architecture, secrets, minimal diffs
+alwaysApply: true
+---
+
+# Homelab / Moltbot — базовые правила
+
+Репозиторий: голосовой homelab (moltbot-api + media-api + UI + Docker + host scripts).
+
+## Архитектура
+
+- **Ollama, Whisper, TTS, media executor** — на **хосте**, не в Docker.
+- **moltbot-api** (18080) и **media-api** (8090) — в Docker.
+- Опциональные сервисы включаются **профилями** compose: `ha`, `ui`, `storage`, `photos`, `torrents`, `gitlab`, `search`.
+
+## Обязательно помнить
+
+1. `docker-compose.raid*.example.yml` — **override**, валидировать с `-f docker-compose.yml -f ...`.
+2. Секреты только в `.env` (gitignored). Не хардкодить ключи.
+3. `context.md` в корне — не операционная документация; смотри `README.md`, `docs/`, `AGENTS.md`.
+4. Intent detection и пользовательские ответы — **русский язык**.
+5. Минимальный scope изменений; не рефакторить несвязанный код.
+
+## Перед коммитом
+
+- Python: `python -m pytest tests/ -v` в изменённом API-пакете.
+- Flutter: `flutter analyze && flutter test` при изменениях в `moltbot_app/`.
+- Compose: `docker compose -f docker-compose.yml config --quiet` при изменении YAML.
+
+Полная карта репо: `AGENTS.md`.

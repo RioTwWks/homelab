@@ -1,0 +1,46 @@
+---
+description: Flutter/Dart conventions for moltbot_app cross-platform client
+globs: moltbot_app/**/*.dart,moltbot_app/pubspec.yaml,moltbot_app/analysis_options.yaml
+alwaysApply: false
+---
+
+# Flutter app (moltbot_app)
+
+## Структура
+
+```
+lib/
+  main.dart
+  screens/          # home, chat, dashboard, server_config
+  src/api/          # moltbot_api.dart — HTTP client
+  src/models/
+  src/settings/     # shared_preferences
+  widgets/
+test/
+```
+
+## API client
+
+- Прямой URL: `http://host:18080`
+- Через веб-UI proxy: `useApiPrefix=true` → `/api/v1/...` на порту 18079
+
+При добавлении эндпоинта в moltbot-api обновить `lib/src/api/moltbot_api.dart` и модели.
+
+## Команды
+
+```bash
+cd moltbot_app
+flutter pub get
+flutter analyze
+flutter test
+```
+
+## Стиль
+
+- Следовать `analysis_options.yaml` и `flutter_lints`
+- SDK: ^3.11 (см. `pubspec.yaml`)
+- Stateful widgets для theme/settings; HTTP через пакет `http`
+
+## Платформы
+
+`android/`, `ios/`, `linux/`, `macos/`, `windows/`, `web/` — не ломать кроссплатформенность без необходимости.

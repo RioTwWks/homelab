@@ -1,0 +1,54 @@
+---
+description: Docker Compose profiles, ports, override files, service wiring
+globs: docker-compose*.yml,moltbot_api/Dockerfile,media_api/Dockerfile,moltbot-ui.nginx.conf
+alwaysApply: false
+---
+
+# Docker Compose
+
+## Базовый стек (без профиля)
+
+`redis`, `qdrant`, `mqtt`, `moltbot-api` (18080→8080), `media-api` (8090)
+
+## Профили
+
+| Profile | Сервисы | Порт |
+|---------|---------|------|
+| `ha` | homeassistant | 8123 |
+| `ui` | moltbot-ui (nginx) | 18079 |
+| `storage` | nextcloud + db | 18082 |
+| `photos` | immich stack | 18083 |
+| `torrents` | qbittorrent, stremio, torrserver, jacred | 18084+ |
+| `gitlab` | gitlab, grafana, runner | 18090 |
+| `search` | searxng | 18081 |
+
+Пример: `docker compose --profile ui --profile ha up -d`
+
+## Override-файлы RAID
+
+`docker-compose.raid.example.yml` и `docker-compose.raid-full.example.yml` — **только overrides volumes**.
+
+Использование:
+```bash
+cp docker-compose.raid.example.yml docker-compose.override.yml
+# или
+docker compose -f docker-compose.yml -f docker-compose.raid.example.yml config
+```
+
+## moltbot-api ↔ host
+
+- `extra_hosts: host.docker.internal:host-gateway`
+- `OLLAMA_BASE_URL=http://host.docker.internal:11434`
+- `MEDIA_API_BASE_URL=http://media-api:8090` (внутри compose network)
+
+## SearXNG
+
+Из контейнера moltbot-api: `SEARXNG_BASE_URL=http://searxng:8080` (не localhost).
+
+## Immich ML
+
+Пин версии: `IMMICH_ML_VERSION=v1.141.1` — тег `release` может ломаться.
+
+## nginx UI
+
+`moltbot-ui.nginx.conf`: `/api/` → `moltbot-api:8080`, статика из `moltbot_ui/`.
