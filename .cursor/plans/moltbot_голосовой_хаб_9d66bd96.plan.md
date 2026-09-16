@@ -1,13 +1,15 @@
 ---
 name: Moltbot голосовой хаб
-overview: План сборки и отладки голосового ассистента на базе Moltbot (STT → Moltbot + Ollama → HA/медиа → TTS, HDMI UI) на Linux-хосте с характеристиками, близкими к AMD Mini PC (Ryzen 7840HS, 32GB, 1TB). Тренировка на личном ПК, затем перенос на mini PC.
+overview: План сборки и отладки голосового ассистента на базе Moltbot (STT → Moltbot + Ollama → HA/медиа → TTS, HDMI UI) на Ubuntu 26.04 LTS Desktop, целевое железо — AMD Ryzen AI 9 HX 370 + Radeon 890M, 32 GB RAM. Без Proxmox/VM для LLM; Docker для сервисов, host для AI/медиа/Steam. Тренировка на личном ПК, затем перенос на mini PC.
 todos: []
 isProject: false
 ---
 
 # План: сборка и отладка системы Moltbot-голосового хаба
 
-## Целевая архитектура (из [context.md](context.md))
+## Целевая архитектура
+
+Детально: [docs/architecture.md](../../docs/architecture.md), [docs/platform.md](../../docs/platform.md). Исходный контекст: [context.md](../../context.md).
 
 ```mermaid
 flowchart TB
@@ -44,15 +46,16 @@ flowchart TB
 
 
 
-**Разделение:** в Docker — Moltbot, Home Assistant, Redis, Vector DB, MQTT, Media API; на хосте — wake word, Whisper, Ollama, TTS, браузер/UI (низкая задержка и доступ к железу). **Актуальные данные:** по интентам (погода, новости) Moltbot запрашивает внешние API, подставляет факты в контекст LLM, ответ — на русском (см. [context.md](context.md), раздел про погоду/новости и RU).
+**Разделение:** в Docker — Moltbot, Home Assistant, Redis, Vector DB, MQTT, Media API; на хосте — wake word, Whisper, Ollama, TTS, Kodi/Stremio/браузер на HDMI (низкая задержка и доступ к железу). **Без Proxmox/VM** для LLM на iGPU с shared RAM. **Режимы ресурсов:** AI / Gaming / Media — динамическая загрузка моделей Ollama, лимиты Docker, приоритеты процессов (см. architecture.md). **Актуальные данные:** по интентам (погода, новости) Moltbot запрашивает внешние API, подставляет факты в контекст LLM, ответ — на русском.
 
 ---
 
 ## Фаза 0: Подготовка окружения (личный ПК)
 
-- **ОС:** Ubuntu 22.04/24.04 LTS или Fedora (как в контексте под AMD). На личном ПК — тот же дистрибутив, что планируется на mini PC.
-- **Установить:** Docker + Docker Compose, Python 3.10+ (venv для скриптов хоста), порты: 11434 (Ollama), 8080/3000 (Moltbot/UI), 8123 (HA), 6379 (Redis) — не конфликтовать с существующими сервисами.
-- **Проверить:** микрофон и вывод звука (ALSA/PulseAudio), при наличии — HDMI/второй дисплей для будущего UI.
+- **ОС:** **Ubuntu 26.04 LTS Desktop** (тот же дистрибутив, что на целевом mini PC). Server — только если Steam/Proton не нужны.
+- **Железо (цель):** Ryzen AI 9 HX 370, Radeon 890M, 32 GB RAM — см. [docs/platform.md](../../docs/platform.md).
+- **Установить:** Docker + Docker Compose, Python 3.10+ (venv для скриптов хоста), Ollama нативно; порты: 11434 (Ollama), 18080 (moltbot-api), 8123 (HA), 6379 (Redis) — не конфликтовать с существующими сервисами.
+- **Проверить:** микрофон и вывод звука (PipeWire/PulseAudio), HDMI/второй дисплей для TV UI; опционально Steam + Proton.
 
 ---
 
@@ -68,7 +71,7 @@ flowchart TB
 ## Фаза 2: STT — Whisper (вне Docker)
 
 - Развернуть Whisper large-v3 локально (Python: [openai/whisper](https://github.com/openai/whisper) или [ggerganov/whisper.cpp](https://github.com/ggerganov/whisper.cpp) для C++).
-- Режим: поток с микрофона → фрагменты по ~5–30 сек → текст. На 7840HS/аналоге — realtime на CPU реалистичен.
+- Режим: поток с микрофона → фрагменты по ~5–30 сек → текст. На Ryzen AI 9 HX 370 — realtime на CPU реалистичен.
 - Сделать минимальный HTTP-сервис или CLI: аудио (файл/stream) → JSON с текстом, чтобы потом подключать к Moltbot по HTTP.
 - Отладить качество и задержку на русском; при необходимости уменьшить модель (medium) для слабого ПК.
 
@@ -133,13 +136,13 @@ flowchart TB
 
 | Категория          | Источники / сервисы                                | Варианты реализации                                                                                                                                                                                                                                                                                                                                |
 | ------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Фильмы/сериалы** | Локальная библиотека, стриминги, торренты          | **Kodi** (библиотека + дополнения) или **Jellyfin** / **Plex**; для торрентов — **qBittorrent** + **Jackett** (поиск) + **Jellyfin** с плагином или **Stremio**; альтернатива — **Radarr**/ **Sonarr** + плеер по выбору.                                                                                                                          |
+| **Фильмы/сериалы** | Локальная библиотека, стриминги, торренты          | **Kodi** (библиотека + IPTV + папка загрузок qBittorrent) и **Stremio** (стриминги/addons); торренты — **qBittorrent** (профиль `torrents` в compose). См. `docs/media-control.md`, `docs/torrents.md`.                                                                                                                          |
 | **YouTube**        | YouTube                                            | Браузер (Chromium) в kiosk на нужный URL; или **FreeTube** (десктоп), или встроенный в Kodi addon; голос: «открой ютуб» / «включи канал X».                                                                                                                                                                                                        |
 | **VK Видео**       | vk.com/video                                       | Браузер на vk.com/video или клиент/виджет; голос: «включи вк видео» / «найди в вк …».                                                                                                                                                                                                                                                              |
 | **Twitch**         | twitch.tv                                          | Браузер на twitch.tv или Kodi addon; голос: «открой твитч» / «включи стрим X».                                                                                                                                                                                                                                                                     |
 | **Telegram-видео** | Telegram (каналы, сохранённое)                     | Через **Telegram Desktop** или веб в браузере; либо бот/API + локальный плеер (сложнее); голос: «покажи видео из телеграма» / «открой канал X».                                                                                                                                                                                                    |
 | **ТВ (эфир)**      | Эфирное/кабельное, IPTV, интернет-каналы           | **TVHeadend** (DVB/IPTV) или **IPTV-плеер** (например в Kodi); **важно:** трансляция по локальному времени — настраивать таймзону в TVHeadend/приложении и при необходимости EPG по локальному времени (источники EPG с привязкой к региону). Избегать жёсткой привязки к московскому времени в UI/скриптах.                                       |
-| **Музыка**         | VK Музыка, Spotify, локальная библиотека, торренты | **VK:** браузер на music.vk.com или неофициальный клиент, если есть. **Spotify:** браузер или **Spotifyd** + любой MPRIS-клиент. **Локальная библиотека:** Jellyfin/Plex/Kodi. **С торрентов:** скачивание через **Lidarr** (или ручной разбор) + библиотека в Jellyfin/Kodi; голос: «включи вк музыку», «поставь в спотифай …», «играй альбом X». |
+| **Музыка**         | VK Музыка, Spotify, локальная библиотека, торренты | **VK:** браузер на music.vk.com. **Spotify:** браузер или **Spotifyd** + MPRIS. **Локальная библиотека:** Kodi. **С торрентов:** qBittorrent → папка в Kodi; голос: «включи вк музыку», «поставь в спотифай …». |
 
 
 **Общая схема управления голосом**
@@ -208,7 +211,7 @@ flowchart TB
 
 - `docker-compose.yml` — Moltbot, HA, Redis, Vector DB, MQTT, Media API; фазы 8–10: файловое хранилище (Nextcloud/FileBrowser), фото (Immich/PhotoPrism), GitLab + Runner.
 - `.gitlab-ci.yml` (или аналог) — пайплайн CI/CD: при push/tag — деплой на сервер (pull, docker compose up), автообновление homelab.
-- `docs/` — установка Ollama/Whisper/TTS на хост, требования к ОС и железу.
+- `docs/architecture.md`, `docs/platform.md` — архитектура и выбор ОС ([architecture](../../docs/architecture.md), [platform](../../docs/platform.md)); остальное в `docs/` — Ollama/Whisper/TTS, фичи по профилям.
 - `scripts/` — запуск голосового контура (wake word + Whisper + вызов Moltbot), запуск TTS, медиа/HDMI.
 - Конфиги Moltbot и HA (в `config/` или рядом с compose), примеры интентов; конфиг/env для API погоды и новостей (ключи — вне репо).
 - Краткий README с порядком развёртывания и отладки по фазам.
@@ -255,7 +258,8 @@ flowchart TB
 
 ## Риски и упрощения
 
-- **Ollama на AMD:** при нестабильном ROCm держать CPU; Qwen3 4B/8B на CPU на 7840HS по контексту приемлемы.
+- **Ollama на AMD:** при нестабильном ROCm держать CPU; Qwen3 4B/8B на CPU на Ryzen AI 9 HX 370 приемлемы. Не использовать Proxmox/VM для LLM на Radeon 890M (shared RAM).
+- **32 GB RAM:** LLM, Docker, desktop и Steam делят память — режимы AI/Gaming/Media и `ollama stop` перед играми (см. architecture.md).
 - **Moltbot:** актуальный способ деплоя (образ/сборка из исходников) уточнить по официальному репозиторию; при отсутствии готового образа — описать сборку своего.
 - **Безопасность:** ограничить доступ к Moltbot и HA (firewall, не светить наружу без необходимости); при необходимости — whitelist команд и гостевой режим, как в контексте.
 - **Погода/новости:** ключи Yandex и News API хранить в env; учитывать квоты и лимиты; кеш 5–30 мин снижает число запросов.

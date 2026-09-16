@@ -1,9 +1,16 @@
 # Moltbot voice hub (MVP)
 
-Этот репозиторий — практический MVP «умной станции» под Linux:
+Домашний голосовой хаб на Linux: локальный ассистент (Moltbot + Ollama), умный дом, медиа на HDMI (Kodi, Stremio, браузер) и серверные сервисы в Docker. Целевая платформа — mini PC **AMD Ryzen AI 9 HX 370**, **Radeon 890M**, **32 GB RAM**, **Ubuntu 26.04 LTS Desktop**.
 
-- Docker: `moltbot-api` (оркестратор), Redis (кеш/сессии), Qdrant (задел под память/векторку), MQTT, опционально Home Assistant
-- Host (вне Docker): Ollama (уже установлен у вас), позже сюда же добавим Whisper/TTS/HDMI UI
+Подробнее:
+
+- [docs/architecture.md](docs/architecture.md) — слои системы, голосовой контур, Docker vs host, режимы ресурсов
+- [docs/platform.md](docs/platform.md) — выбор ОС, установка хоста, драйверы
+
+**Разделение по слоям:**
+
+- **Docker:** `moltbot-api` (оркестратор), Redis, Qdrant, MQTT, `media-api`, `moltbot-ui`; опционально Home Assistant, Nextcloud, Immich, GitLab, qBittorrent, SearxNG (профили в `docker-compose.yml`)
+- **Host (вне Docker):** Ollama (`qwen3:4b` / `qwen3:8b`), Whisper STT, TTS, wake word, media executor, Kodi/Stremio/браузер на HDMI
 
 ## Быстрый старт
 
@@ -148,6 +155,7 @@ docker compose --profile gitlab up -d
 
 ## Следующие шаги
 
+- Архитектура и платформа: `docs/architecture.md`, `docs/platform.md`.
 - Голосовой MVP (push-to-talk): см. `docs/voice-mvp.md`.
 - Web-search fallback (SearxNG + DuckDuckGo): см. `docs/web-search.md`.
 - Media Control API и варианты плееров: см. `docs/media-control.md`.
