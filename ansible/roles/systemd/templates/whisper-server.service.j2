@@ -1,0 +1,19 @@
+[Unit]
+Description=Whisper.cpp server for Moltbot voice MVP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ voice_user }}
+Group={{ voice_user }}
+WorkingDirectory={{ moltbot_install_dir }}
+EnvironmentFile=-{{ moltbot_install_dir }}/scripts/voice_mvp.env
+ExecStart={{ moltbot_install_dir }}/scripts/whisper_server_run.sh
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

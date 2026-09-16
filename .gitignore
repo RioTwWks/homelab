@@ -218,7 +218,12 @@ pubspec.lock
 doc/api/
 
 # dotenv environment variables file
-.env*
+.env
+.env.*
+!.env.example
+
+# Ansible local config (may contain secrets)
+ansible/group_vars/local.yml
 
 # Avoid committing generated Javascript files:
 *.dart.js

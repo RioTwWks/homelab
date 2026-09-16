@@ -1,0 +1,26 @@
+---
+- name: Ensure install directory exists
+  ansible.builtin.stat:
+    path: "{{ moltbot_install_dir }}/docker-compose.yml"
+  register: compose_file
+
+- name: Fail if docker-compose.yml missing
+  ansible.builtin.fail:
+    msg: "docker-compose.yml not found in {{ moltbot_install_dir }}"
+  when: not compose_file.stat.exists
+
+- name: Render .env for docker compose
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ moltbot_install_dir }}/.env"
+    mode: "0600"
+  notify: Restart moltbot stack
+
+- name: Start Docker Compose stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ moltbot_install_dir }}"
+    project_name: "{{ moltbot_compose_project_name }}"
+    profiles: "{{ moltbot_profiles }}"
+    build: always
+    state: present
+  register: compose_up

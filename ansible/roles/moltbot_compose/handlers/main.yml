@@ -1,0 +1,9 @@
+---
+- name: Restart moltbot stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ moltbot_install_dir }}"
+    project_name: "{{ moltbot_compose_project_name }}"
+    profiles: "{{ moltbot_profiles }}"
+    build: always
+    state: present
+    recreate: always
