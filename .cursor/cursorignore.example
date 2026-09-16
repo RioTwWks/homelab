@@ -1,0 +1,22 @@
+# Скопируйте в корень репо как .cursorignore (файл gitignored по умолчанию)
+# Исключает шум из AI-индексации и автодополнения
+
+# Логи и артефакты
+nohup.out
+*.log
+.pytest_cache/
+.dart_tool/
+build/
+
+# Большие/неоперационные заметки
+context.md
+
+# Локальные секреты и runner state
+.env
+.env.*
+scripts/voice_mvp.env
+gitlab-runner-config/.runner_system_id
+gitlab-runner-config/config.toml
+
+# Git internals
+.git/

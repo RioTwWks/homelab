@@ -1,0 +1,41 @@
+---
+description: pytest, Flutter tests, GitHub Actions CI workflow
+globs: **/tests/**/*,.github/workflows/**,**/pytest.ini,**/requirements-dev.txt,moltbot_app/test/**/*
+alwaysApply: false
+---
+
+# Testing & CI
+
+## GitHub Actions (`.github/workflows/ci.yml`)
+
+Триггер: push/PR в `main`.
+
+| Job | Действие |
+|-----|----------|
+| `python-api` | matrix: moltbot_api, media_api — pytest |
+| `flutter-app` | flutter analyze + test |
+| `docker-compose` | `docker compose config` для base + RAID overrides |
+
+## Python
+
+```bash
+cd moltbot_api  # или media_api
+pip install -r requirements.txt -r requirements-dev.txt
+python -m pytest tests/ -v
+```
+
+- `pytest.ini`: `pythonpath = .`, asyncio auto (moltbot_api)
+- Моки: Redis (`RedisCache`), httpx (`AsyncMock` для async)
+- Не добавлять тесты, требующие Ollama/Redis/Docker в CI
+
+## Flutter
+
+```bash
+cd moltbot_app && flutter pub get && flutter analyze && flutter test
+```
+
+## При добавлении фичи
+
+1. Тест для нового поведения (если логика нетривиальна)
+2. Убедиться, что CI job покрывает изменённый пакет
+3. Compose changes → `docker compose config --quiet` локально

@@ -1,0 +1,48 @@
+---
+description: Host-side scripts — voice pipeline, backup, media executor, timers, systemd
+globs: scripts/**/*
+alwaysApply: false
+---
+
+# Host scripts (`scripts/`)
+
+Скрипты работают **вне Docker** на Linux-хосте с доступом к микрофону, ALSA, браузеру.
+
+## Голосовой pipeline
+
+| Файл | Роль |
+|------|------|
+| `voice_mvp.sh` | Push-to-talk: mic → Whisper → moltbot-api → TTS |
+| `voice_mvp.env.example` | Шаблон конфига (копировать в `voice_mvp.env`, gitignored) |
+| `whisper_server_run.sh` | Pre-warmed whisper-server :8099 |
+| `silero_tts.py` | Silero TTS helper |
+| `wakeword_openwakeword.py` | Wake word → запуск voice_mvp |
+
+Документация: `docs/voice-mvp.md`, `docs/wake-word.md`
+
+## Media executor
+
+| Файл | Роль |
+|------|------|
+| `media_executor_example.py` | HTTP :8091, open_url в браузер |
+| `media_executor_kiosk.py` | Chromium kiosk + Kodi JSON-RPC |
+
+Нужен `MEDIA_EXECUTOR_URL=http://host.docker.internal:8091` в `.env`.
+
+## Таймеры
+
+- `timer_worker.py` — polling Redis, TTS при срабатывании
+- `systemd/timer-worker.service` — unit для systemd
+
+API создаёт таймеры в Redis; без worker на хосте уведомления не прозвучат.
+
+## Backup
+
+- `backup.sh` + `systemd/homelab-backup.{service,timer}`
+- Документация: `docs/backup.md`
+
+## Правила
+
+- Не хардкодить пути и секреты — использовать env-файлы
+- systemd units в `scripts/systemd/` — копировать на хост вручную
+- Bash-скрипты: `set -euo pipefail` где уместно

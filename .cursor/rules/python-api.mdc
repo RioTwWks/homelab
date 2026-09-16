@@ -1,0 +1,58 @@
+---
+description: FastAPI conventions for moltbot_api and media_api — routes, tools, testing
+globs: moltbot_api/**/*.py,media_api/**/*.py,moltbot_api/requirements*.txt,media_api/requirements*.txt
+alwaysApply: false
+---
+
+# Python API (moltbot_api, media_api)
+
+## Стек
+
+- Python 3.12, FastAPI, Pydantic v2, uvicorn, httpx, redis
+- Type hints обязательны: `def fn(x: str) -> dict[str, Any]:`
+- Логирование: `logging.getLogger(__name__)`, не `print()`
+
+## moltbot_api
+
+```
+app/
+  main.py           # routes, intent routing, chat
+  ollama_client.py  # Ollama HTTP
+  redis_cache.py    # JSON cache
+  tools/            # news, weather, media, HA, timers, web_search, versions
+tests/
+```
+
+### Эндпоинты
+
+- `GET /healthz`, `GET /`
+- `POST /v1/chat`, `POST /v1/chat/stream`
+- `GET /v1/system/status`, `POST /v1/system/services`
+- `GET|POST /v1/settings/weather`
+
+### Intent priority
+
+media_control → home_assistant → tools (news/weather/version/timer) → web search → Ollama LLM.
+
+Новый tool: модуль в `app/tools/`, импорт в `main.py`, тест с моками внешних HTTP.
+
+## media_api
+
+- `POST /v1/command` — принимает action/url/target, форвардит на `MEDIA_EXECUTOR_URL`
+- Без executor URL команда только сохраняется (debug mode)
+
+## Тесты
+
+```bash
+cd moltbot_api  # или media_api
+pip install -r requirements.txt -r requirements-dev.txt
+python -m pytest tests/ -v
+```
+
+- `TestClient` для sync endpoints
+- `@patch` для Redis, `httpx.AsyncClient` (async mock: `AsyncMock`)
+- Не требовать живой Redis/Ollama в unit-тестах
+
+## Env (не коммитить)
+
+Ключевые: `OLLAMA_BASE_URL`, `REDIS_URL`, `MEDIA_API_BASE_URL`, `HOME_ASSISTANT_URL`+`TOKEN`, `WEB_SEARCH_PROVIDER`, `SEARXNG_BASE_URL`.
