@@ -1025,3 +1025,14 @@ TTS (Silero/Piper) → voice output
 [3]: https://www.meteosource.com/current-weather-api-moscow?utm_source=chatgpt.com "API - current weather data for Moscow, Russia"
 [4]: https://metgis.com/en/weather-apis/?utm_source=chatgpt.com "MetGIS weather data APIs"
 [5]: https://newsapi.org/s/google-news-ru-api?utm_source=chatgpt.com "Google News (Russia) API - Live news headlines and articles from Google News (Russia)"
+
+---
+
+## Выбор платформы и итоговая конфигурация
+
+Продолжение обсуждения (выбор Linux, Steam/Proton, железо Ryzen AI 9 HX 370 + Radeon 890M) зафиксировано в документации репозитория:
+
+- [docs/platform.md](docs/platform.md) — **Ubuntu 26.04 LTS Desktop** как host OS, сравнение с Server/Debian/Proxmox, установка
+- [docs/architecture.md](docs/architecture.md) — слои Gaming / Homelab / AI, Docker vs host, режимы ресурсов (AI / Gaming / Media), отказ от гипервизора для LLM на iGPU
+
+Краткий итог: Ubuntu управляет железом и desktop (Steam, Kodi, Stremio, HDMI), Docker — сервисами homelab, Ollama/Whisper/TTS — на хосте; репозиторий `homelab` — верхний уровень оркестрации.
