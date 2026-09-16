@@ -1,0 +1,21 @@
+---
+- name: Check ollama binary
+  ansible.builtin.command: ollama --version
+  register: ollama_check
+  changed_when: false
+  failed_when: false
+
+- name: Install Ollama
+  ansible.builtin.shell: |
+    set -euo pipefail
+    curl -fsSL https://ollama.com/install.sh | sh
+  args:
+    creates: /usr/local/bin/ollama
+  when: ollama_check.rc != 0
+
+- name: Pull Ollama models
+  ansible.builtin.command: "ollama pull {{ item }}"
+  loop: "{{ ollama_models }}"
+  register: ollama_pull
+  changed_when: "'pulling' in ollama_pull.stdout or 'downloaded' in ollama_pull.stdout"
+  failed_when: ollama_pull.rc != 0 and 'already' not in (ollama_pull.stderr | default(''))

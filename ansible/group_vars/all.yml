@@ -1,0 +1,96 @@
+---
+# Paths — resolved in playbook pre_tasks from playbook_dir (override in local.yml if needed)
+moltbot_install_dir: ""
+moltbot_compose_project_name: homelab
+
+# Preset → docker compose profiles
+moltbot_profile_presets:
+  minimal:
+    - ui
+  voice:
+    - ui
+    - search
+  storage:
+    - ui
+    - storage
+  photos:
+    - ui
+    - photos
+  full:
+    - ui
+    - ha
+    - storage
+    - photos
+    - torrents
+    - search
+    - gitlab
+
+# Active preset if moltbot_profiles not set explicitly
+moltbot_preset: minimal
+
+# Resolved in playbook pre_tasks from moltbot_preset or explicit list in local.yml
+
+# Feature flags
+moltbot_enable_voice: false
+moltbot_enable_ollama: true
+moltbot_enable_systemd_whisper: false
+moltbot_enable_systemd_timer_worker: false
+moltbot_enable_backup_timer: false
+
+# Ollama
+ollama_base_url: http://host.docker.internal:11434
+ollama_models:
+  - qwen3:4b
+  - qwen3:8b
+
+# Docker / app
+tz: Europe/Moscow
+default_weather_city: ""
+default_weather_district: ""
+web_search_provider: off
+searxng_base_url: http://searxng:8080
+searxng_public_url: http://localhost:18081
+media_executor_url: ""
+
+# Optional integrations (empty = disabled)
+home_assistant_url: ""
+home_assistant_token: ""
+openweather_api_key: ""
+yandex_weather_api_key: ""
+
+# Nextcloud (profile storage)
+nextcloud_admin_user: admin
+nextcloud_admin_password: ""
+nextcloud_db_password: nextcloud
+nextcloud_trusted_domains: "localhost 127.0.0.1"
+
+# GitLab (profile gitlab)
+gitlab_external_url: http://localhost:18090
+grafana_admin_password: admin
+
+# Voice (host)
+voice_user: "{{ ansible_user_id | default(lookup('env', 'USER')) }}"
+whisper_cpp_dir: "{{ ansible_env.HOME }}/.local/src/whisper.cpp"
+whisper_model_name: medium
+whisper_server_port: 8099
+tts_engine: piper
+piper_venv: "{{ ansible_env.HOME }}/.venvs/piper"
+silero_venv: "{{ ansible_env.HOME }}/.venvs/silero"
+
+# Backup timer
+backup_dir: /backup/homelab
+backup_retention_days: 14
+
+# Apt packages for common role
+homelab_apt_packages:
+  - ca-certificates
+  - curl
+  - jq
+  - git
+  - build-essential
+  - cmake
+  - alsa-utils
+  - sox
+  - python3
+  - python3-venv
+  - python3-pip

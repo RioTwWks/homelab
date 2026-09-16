@@ -1,0 +1,19 @@
+[Unit]
+Description=Moltbot timer worker
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ voice_user }}
+Group={{ voice_user }}
+WorkingDirectory={{ moltbot_install_dir }}
+Environment=HOME={{ ansible_env.HOME }}
+ExecStart={{ silero_venv }}/bin/python {{ moltbot_install_dir }}/scripts/timer_worker.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

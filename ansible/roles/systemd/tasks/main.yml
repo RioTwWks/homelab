@@ -1,0 +1,51 @@
+---
+- name: Install whisper-server systemd unit
+  ansible.builtin.template:
+    src: whisper-server.service.j2
+    dest: /etc/systemd/system/whisper-server.service
+    mode: "0644"
+  when: moltbot_enable_systemd_whisper | bool
+  notify: Reload systemd
+
+- name: Enable whisper-server
+  ansible.builtin.systemd:
+    name: whisper-server
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: moltbot_enable_systemd_whisper | bool
+
+- name: Install timer-worker systemd unit
+  ansible.builtin.template:
+    src: timer-worker.service.j2
+    dest: /etc/systemd/system/timer-worker.service
+    mode: "0644"
+  when: moltbot_enable_systemd_timer_worker | bool
+  notify: Reload systemd
+
+- name: Enable timer-worker
+  ansible.builtin.systemd:
+    name: timer-worker
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: moltbot_enable_systemd_timer_worker | bool
+
+- name: Install homelab-backup service and timer
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/etc/systemd/system/{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - { src: homelab-backup.service.j2, dest: homelab-backup.service }
+    - { src: homelab-backup.timer.j2, dest: homelab-backup.timer }
+  when: moltbot_enable_backup_timer | bool
+  notify: Reload systemd
+
+- name: Enable homelab-backup timer
+  ansible.builtin.systemd:
+    name: homelab-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: moltbot_enable_backup_timer | bool

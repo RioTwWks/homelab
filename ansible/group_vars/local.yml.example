@@ -1,0 +1,39 @@
+---
+# Copy to local.yml via: make configure
+# Or: cp ansible/group_vars/local.yml.example ansible/group_vars/local.yml
+
+moltbot_preset: minimal
+# Or explicit list (overrides preset):
+# moltbot_profiles: [ui, search]
+
+moltbot_enable_voice: false
+moltbot_enable_ollama: true
+moltbot_enable_systemd_whisper: false
+moltbot_enable_systemd_timer_worker: false
+moltbot_enable_backup_timer: false
+
+tz: Europe/Moscow
+default_weather_city: Москва
+default_weather_district: ""
+
+ollama_base_url: http://host.docker.internal:11434
+ollama_models:
+  - qwen3:4b
+  - qwen3:8b
+
+web_search_provider: off
+# web_search_provider: searxng
+
+home_assistant_url: ""
+home_assistant_token: ""
+
+nextcloud_admin_password: ""
+openweather_api_key: ""
+yandex_weather_api_key: ""
+
+voice_user: "{{ ansible_user_id }}"
+whisper_model_name: medium
+tts_engine: piper
+
+backup_dir: /backup/homelab
+backup_retention_days: 14

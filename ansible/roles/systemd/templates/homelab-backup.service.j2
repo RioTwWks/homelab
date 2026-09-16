@@ -1,0 +1,17 @@
+[Unit]
+Description=Homelab full backup (repo + Docker volumes)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory={{ moltbot_install_dir }}
+Environment=COMPOSE_PROJECT_NAME={{ moltbot_compose_project_name }}
+Environment=BACKUP_DIR={{ backup_dir }}
+Environment=BACKUP_RETENTION_DAYS={{ backup_retention_days }}
+ExecStart={{ moltbot_install_dir }}/scripts/backup.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

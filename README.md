@@ -7,6 +7,19 @@
 
 ## Быстрый старт
 
+### Вариант A: Makefile + Ansible (рекомендуется)
+
+```bash
+sudo apt install -y make ansible-core
+make configure    # wizard → ansible/group_vars/local.yml
+make install      # Docker, Ollama, compose, health check
+```
+
+Пресеты: `make install-minimal` | `make install-voice` | `make install-full`.  
+Подробно: [`docs/install.md`](docs/install.md).
+
+### Вариант B: вручную (docker compose)
+
 1) Скопируйте `.env.example` в `.env` и при необходимости отредактируйте.
 
 2) Поднимите контейнеры:
