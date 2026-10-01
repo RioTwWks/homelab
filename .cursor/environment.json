@@ -2,7 +2,7 @@
   "name": "homelab",
   "install": "python3 -m pip install --upgrade pip && python3 -m pip install -r moltbot_api/requirements.txt -r moltbot_api/requirements-dev.txt && python3 -m pip install -r media_api/requirements.txt -r media_api/requirements-dev.txt",
   "build": {
-    "dockerfile": "Dockerfile",
+    "dockerfile": "environment/Dockerfile",
     "context": "environment"
   }
 }
