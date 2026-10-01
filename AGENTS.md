@@ -85,6 +85,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/hermes-phase1-runbook.md` | Hermes install, config ≥64K |
 | `docs/rag-qdrant.md` | Qdrant RAG ingest, Hermes integration |
 | `docs/homelab-modes.md` | AI / Gaming / Media, Steam/Proton |
+| `docs/opencode.md` | OpenCode + Ollama (кодинг, `~/.config/opencode`) |
 
 ## Подсказки для изменений
 
