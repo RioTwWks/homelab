@@ -27,6 +27,39 @@ const $sidebarBackdrop = document.getElementById("sidebarBackdrop");
 const $topbarTabs     = document.getElementById("topbarTabs");
 const $dashboardGrid   = document.getElementById("dashboardGrid");
 const $dashboardFooter = document.getElementById("dashboardFooter");
+const $homelabModeStatus = document.getElementById("homelabModeStatus");
+const $homelabModeBtns = document.querySelectorAll("[data-homelab-mode]");
+const HOMELAB_MODE_LABELS = { ai: "AI", gaming: "Gaming", media: "Media" };
+let homelabModeBusy = false;
+function setHomelabModeUi(mode, message) {
+  const m = (mode || "").toLowerCase();
+  $homelabModeBtns.forEach(btn => { btn.classList.toggle("active", btn.dataset.homelabMode === m); btn.disabled = homelabModeBusy; });
+  if ($homelabModeStatus) $homelabModeStatus.textContent = message || `Текущий режим: ${HOMELAB_MODE_LABELS[m] || m || "—"}`;
+}
+async function loadHomelabMode() {
+  if (!$homelabModeStatus) return;
+  try {
+    const r = await fetch("/api/v1/system/homelab-mode", { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const st = (await r.json()).state || {};
+    setHomelabModeUi(st.mode, st.message ? `${HOMELAB_MODE_LABELS[st.mode] || st.mode}: ${st.message}` : undefined);
+  } catch (e) { setHomelabModeUi("", `Режим недоступен (${e?.message})`); }
+}
+async function switchHomelabMode(mode) {
+  if (homelabModeBusy || !mode) return;
+  homelabModeBusy = true; setHomelabModeUi(mode, "Переключение…");
+  try {
+    const r = await fetch("/api/v1/system/homelab-mode", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode }), signal: AbortSignal.timeout(120000) });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data?.detail || `HTTP ${r.status}`);
+    let hint = data.state?.message || "ok";
+    if (data.executor?.skipped) hint += " (HOMELAB_MODE_EXECUTOR_URL)";
+    setHomelabModeUi(mode, `${HOMELAB_MODE_LABELS[mode]}: ${hint}`);
+    toast(`Режим ${HOMELAB_MODE_LABELS[mode]}`, "info");
+  } catch (e) { setHomelabModeUi(mode, `Ошибка: ${e?.message}`); toast("Не удалось переключить режим", "error"); }
+  finally { homelabModeBusy = false; $homelabModeBtns.forEach(b => { b.disabled = false; }); loadHomelabMode(); }
+}
+$homelabModeBtns.forEach(btn => btn.addEventListener("click", () => { switchHomelabMode(btn.dataset.homelabMode); if (window.innerWidth <= 768) closeSidebar(); }));
 
 /* ─── Service registry for Dashboard (url = open in browser, probeUrl = backend GET from Docker network) ─── */
 const SERVICES = [
@@ -744,6 +777,7 @@ async function loadDashboard() {
 function refreshRightPanel() {
   loadDashboard();
   loadStatus();
+loadHomelabMode();
 }
 document.getElementById("refreshRightPanel")?.addEventListener("click", refreshRightPanel);
 
@@ -833,3 +867,4 @@ renderSessionList();
 restoreChat();
 loadDashboard();
 loadStatus();
+loadHomelabMode();

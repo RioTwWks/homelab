@@ -23,6 +23,7 @@ from app.tools.home_assistant import (
     ha_reply_text,
 )
 from app.tools.timers import handle_timer_request
+from app.homelab_mode import HomelabModeName, VALID_MODES, read_state, set_mode
 
 
 app = FastAPI(title="moltbot-api", version="0.1.0")
@@ -210,6 +211,7 @@ def root() -> dict[str, Any]:
             "chat_stream": "/v1/chat/stream",
             "system_status": "/v1/system/status",
             "system_services": "/v1/system/services",
+            "homelab_mode": "/v1/system/homelab-mode",
         },
     }
 
@@ -311,6 +313,20 @@ async def probe_services(req: list[ServiceProbeItem]) -> dict[str, Any]:
 
     await asyncio.gather(*(_probe(item) for item in req[:64]))
     return {"ok": True, "ts": int(time.time()), "services": results}
+
+
+class HomelabModeRequest(BaseModel):
+    mode: HomelabModeName
+
+
+@app.get("/v1/system/homelab-mode")
+def get_homelab_mode() -> dict[str, Any]:
+    return {"ok": True, "ts": int(time.time()), "modes": sorted(VALID_MODES), "state": read_state()}
+
+
+@app.post("/v1/system/homelab-mode")
+async def post_homelab_mode(req: HomelabModeRequest) -> dict[str, Any]:
+    return await set_mode(req.mode)
 
 
 class WeatherSettings(BaseModel):

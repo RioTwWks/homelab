@@ -383,6 +383,11 @@ html[data-theme="light"] .theme-icon-dark { display: none; }
 }
 .chip:active { transform: translateY(0); }
 .hint { margin-top: 5px; color: var(--muted); font-size: 9.5px; line-height: 1.4; }
+.homelab-mode-hint{font-size:10px;color:var(--muted);margin-bottom:8px}
+.homelab-mode-switch{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.homelab-mode-btn{border:1px solid var(--border);background:var(--card-bg);color:var(--text2);border-radius:var(--r-sm);padding:8px 4px;font-size:10px;font-weight:600;cursor:pointer}
+.homelab-mode-btn.active{border-color:var(--accent);background:rgba(124,156,255,.12);color:var(--text)}
+.homelab-mode-status{margin-top:8px;font-size:10px;color:var(--muted);min-height:2.8em}
 
 /* ═══════ SESSION MANAGER ═══════ */
 .session-list {

@@ -75,12 +75,16 @@ services:
       - HOME_ASSISTANT_TOKEN=${HOME_ASSISTANT_TOKEN:-}
       - QBITTORRENT_WEB_URL=${QBITTORRENT_WEB_URL:-http://localhost:18084}
       - STREMIO_WEB_URL=${STREMIO_WEB_URL:-stremio://}
+      - HOMELAB_MODE_STATE_PATH=${HOMELAB_MODE_STATE_PATH:-/data/homelab-mode/state.json}
+      - HOMELAB_MODE_EXECUTOR_URL=${HOMELAB_MODE_EXECUTOR_URL:-}
     ports:
       - "18080:8080"
     depends_on:
       - redis
       - qdrant
       - mqtt
+    volumes:
+      - ./runtime/homelab-mode:/data/homelab-mode
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

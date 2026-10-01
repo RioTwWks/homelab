@@ -57,6 +57,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | 18079 | moltbot-ui (profile `ui`) |
 | 8090 | media-api |
 | 8091 | media executor (host) |
+| 8092 | homelab mode executor (host) |
 | 11434 | Ollama (host) |
 | 8123 | Home Assistant (profile `ha`) |
 
@@ -80,6 +81,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/timers.md` | Таймеры, timer_worker |
 | `docs/storage-raid.md` | RAID override-файлы |
 | `docs/backup.md` | backup.sh, systemd timer |
+| `docs/homelab-modes.md` | AI / Gaming / Media, Steam/Proton |
 
 ## Подсказки для изменений
 
