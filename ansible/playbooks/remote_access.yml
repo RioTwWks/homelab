@@ -1,0 +1,27 @@
+---
+- name: Moltbot homelab — remote access clients (Headscale / Cloudflare)
+  hosts: homelab
+  gather_facts: true
+
+  pre_tasks:
+    - name: Set install directory
+      ansible.builtin.set_fact:
+        moltbot_install_dir: "{{ moltbot_install_dir | default(playbook_dir + '/../..', true) }}"
+
+    - name: Load local overrides
+      ansible.builtin.include_vars:
+        file: "{{ playbook_dir }}/../group_vars/local.yml"
+      failed_when: false
+
+  roles:
+    - role: remote_access
+      tags: [remote_access, tailscale, cloudflared]
+
+  post_tasks:
+    - name: Remote access summary
+      ansible.builtin.debug:
+        msg:
+          - "Tailscale client: {{ remote_access_install_tailscale_client | bool }}"
+          - "Cloudflared: {{ remote_access_install_cloudflared | bool }}"
+          - "Docs: docs/remote-access.md"
+          - "Place Cloudflare credentials at {{ remote_access_cloudflare_credentials_path }} before starting tunnel"

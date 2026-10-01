@@ -1,0 +1,21 @@
+---
+remote_access_install_tailscale_client: false
+remote_access_headscale_login_server: ""
+# Set only in local.yml (secret):
+remote_access_tailscale_authkey: ""
+
+remote_access_install_cloudflared: false
+remote_access_cloudflare_tunnel_name: homelab
+remote_access_cloudflare_tunnel_id: ""
+remote_access_cloudflare_credentials_path: /etc/cloudflared/credentials.json
+remote_access_cloudflare_config_path: /etc/cloudflared/config.yml
+
+# Example ingress — override in local.yml with real hostnames
+remote_access_cloudflare_ingress:
+  - hostname: moltbot.example.com
+    service: http://localhost:18079
+  - hostname: api-moltbot.example.com
+    service: http://localhost:18080
+
+remote_access_tailscale_hostname: homelab
+remote_access_tailscale_accept_routes: true

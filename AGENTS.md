@@ -45,7 +45,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 ```
 
 - **Ollama на хосте**, не в Docker. Контейнер ходит на `host.docker.internal:11434`.
-- **Профили** (`ha`, `ui`, `storage`, `photos`, `torrents`, `gitlab`, `search`) не стартуют без `--profile`.
+- **Профили** (`ha`, `ui`, `storage`, `photos`, `torrents`, `gitlab`, `monitoring`, `search`) не стартуют без `--profile`.
 - **Media:** нужен `MEDIA_EXECUTOR_URL` + скрипт на хосте (`scripts/media_executor_example.py`).
 - **Таймеры:** API пишет в Redis, на хосте нужен `scripts/timer_worker.py`.
 - **SearXNG из контейнера:** `SEARXNG_BASE_URL=http://searxng:8080`, не `localhost`.
@@ -84,8 +84,10 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/backup.md` | backup.sh, systemd timer |
 | `docs/hermes-phase1-runbook.md` | Hermes install, config ≥64K |
 | `docs/rag-qdrant.md` | Qdrant RAG ingest, Hermes integration |
-| `docs/homelab-modes.md` | AI / Gaming / Media, Steam/Proton |
+| `docs/homelab-modes.md` | AI / Gaming / Media, executor, Steam/Proton |
 | `docs/opencode.md` | OpenCode + Ollama (кодинг, `~/.config/opencode`) |
+| `docs/monitoring.md` | Prometheus, Grafana, all-smi |
+| `docs/remote-access.md` | AmneziaWG, Headscale, Cloudflare Tunnel |
 
 ## Подсказки для изменений
 

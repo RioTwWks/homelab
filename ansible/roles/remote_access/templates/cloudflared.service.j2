@@ -1,0 +1,13 @@
+[Unit]
+Description=Cloudflare Tunnel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/cloudflared --config {{ remote_access_cloudflare_config_path }} tunnel run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
