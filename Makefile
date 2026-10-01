@@ -96,12 +96,12 @@ backup-timer: ansible-deps ## Enable homelab-backup systemd timer
 	@test -f $(LOCAL_VARS) || { echo "Run 'make configure' first"; exit 1; }
 	$(ANSIBLE) $(PLAYBOOK_SITE) --tags backup $(ANSIBLE_ARGS)
 
-check: ## Syntax-check Ansible + monitoring configs (no NPU/host required)
+check: ## Syntax-check Ansible + monitoring configs + OpenCode JSON (no NPU/host required)
 	@command -v ansible-playbook >/dev/null || { echo "ansible-playbook not found"; exit 1; }
+	@command -v jq >/dev/null || { echo "jq not found (needed for OpenCode config)"; exit 1; }
 	$(ANSIBLE) $(PLAYBOOK_SITE) --syntax-check
 	$(ANSIBLE) $(PLAYBOOK_VOICE) --syntax-check
 	$(ANSIBLE) $(PLAYBOOK_REMOTE_ACCESS) --syntax-check
-	@command -v jq >/dev/null || { echo "jq not found (needed for OpenCode config)"; exit 1; }
 	@jq empty $(ROOT_DIR)/config/opencode/opencode.json
 	@if command -v docker >/dev/null; then \
 		docker compose -f $(ROOT_DIR)/docker-compose.yml --profile monitoring config --quiet; \

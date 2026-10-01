@@ -106,3 +106,24 @@ jobs:
 
       - name: Verify runbook (voice Ansible, monitoring configs)
         run: bash scripts/verify-runbook-voice-monitoring.sh
+
+  homelab-runbook-rag-modes:
+    name: RAG + homelab modes runbook (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify runbook (RAG dry-run, homelab modes)
+        run: bash scripts/verify-runbook-rag-modes.sh
+
+  homelab-runbook-remote-access-opencode:
+    name: Remote access + OpenCode (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ansible-core jq
+
+      - name: Verify runbook (Ansible + OpenCode JSON)
+        run: bash scripts/verify-runbook-remote-access-opencode.sh

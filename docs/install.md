@@ -61,7 +61,7 @@ scripts/configure-wizard.sh       # интерактивный выбор
 | `make health` | `curl /healthz` |
 | `make backup-timer` | Включить ежедневный бэкап |
 | `make remote-access` | Клиент Headscale / cloudflared (`docs/remote-access.md`) |
-| `make check` | `ansible-playbook --syntax-check` |
+| `make check` | Ansible `--syntax-check` + `jq` для `config/opencode/opencode.json` |
 
 ## Профили Docker Compose
 
