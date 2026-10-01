@@ -1,19 +1,45 @@
 ---
-- name: Install whisper-server systemd unit
+- name: Install whisper-server systemd unit (legacy stack)
   ansible.builtin.template:
     src: whisper-server.service.j2
     dest: /etc/systemd/system/whisper-server.service
     mode: "0644"
-  when: moltbot_enable_systemd_whisper | bool
+  when:
+    - voice_backend | default('hermes') == 'legacy'
+    - moltbot_enable_systemd_whisper | bool
   notify: Reload systemd
 
-- name: Enable whisper-server
+- name: Enable whisper-server (legacy stack)
   ansible.builtin.systemd:
     name: whisper-server
     enabled: true
     state: started
     daemon_reload: true
-  when: moltbot_enable_systemd_whisper | bool
+  when:
+    - voice_backend | default('hermes') == 'legacy'
+    - moltbot_enable_systemd_whisper | bool
+
+- name: Install FLM ASR server systemd unit (Hermes NPU STT)
+  ansible.builtin.template:
+    src: flm-asr.service.j2
+    dest: /etc/systemd/system/flm-asr.service
+    mode: "0644"
+  when:
+    - voice_backend | default('hermes') == 'hermes'
+    - hermes_enable_npu_stt | bool
+    - moltbot_enable_systemd_flm_asr | bool
+  notify: Reload systemd
+
+- name: Enable FLM ASR server
+  ansible.builtin.systemd:
+    name: flm-asr
+    enabled: true
+    state: started
+    daemon_reload: true
+  when:
+    - voice_backend | default('hermes') == 'hermes'
+    - hermes_enable_npu_stt | bool
+    - moltbot_enable_systemd_flm_asr | bool
 
 - name: Install timer-worker systemd unit
   ansible.builtin.template:

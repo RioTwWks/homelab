@@ -22,7 +22,8 @@ make install        # deps + docker compose + health check
 
 ```bash
 make install-minimal   # ui
-make install-voice     # ui + search + voice + whisper systemd
+make install-voice
+make install-voice-npu
 make install-full      # все профили + backup timer
 ```
 

@@ -47,23 +47,35 @@ WEB_SEARCH="off"
 case "${PRESET}" in
   voice)
     ENABLE_VOICE=true
-    ENABLE_WHISPER_SVC=true
+    ENABLE_WHISPER_SVC=false
+    ENABLE_HERMES_NPU=false
     WEB_SEARCH="searxng"
     ;;
   full)
     ENABLE_VOICE=true
-    ENABLE_WHISPER_SVC=true
+    ENABLE_WHISPER_SVC=false
+    ENABLE_HERMES_NPU=false
     ENABLE_TIMER=true
     ENABLE_BACKUP=true
     WEB_SEARCH="searxng"
     ;;
 esac
 
-if yn "Install voice stack (Whisper + TTS on host)?" "$([ "$ENABLE_VOICE" = true ] && echo y || echo n)"; then
+VOICE_BACKEND="hermes"
+ENABLE_HERMES_NPU="${ENABLE_HERMES_NPU:-false}"
+
+if yn "Install voice stack (Hermes wake/STT/TTS)?" "$([ "$ENABLE_VOICE" = true ] && echo y || echo n)"; then
   ENABLE_VOICE=true
 fi
-if yn "Enable whisper-server systemd unit?" "$([ "$ENABLE_WHISPER_SVC" = true ] && echo y || echo n)"; then
-  ENABLE_WHISPER_SVC=true
+if yn "Use legacy whisper.cpp voice MVP instead of Hermes?" "n"; then
+  VOICE_BACKEND="legacy"
+  if yn "Enable whisper-server systemd (legacy)?" "$([ "$ENABLE_WHISPER_SVC" = true ] && echo y || echo n)"; then
+    ENABLE_WHISPER_SVC=true
+  fi
+else
+  if yn "Enable FastFlowLM NPU STT (flm-asr)?" "$([ "$ENABLE_HERMES_NPU" = true ] && echo y || echo n)"; then
+    ENABLE_HERMES_NPU=true
+  fi
 fi
 if yn "Install Ollama and pull models?" "y"; then
   ENABLE_OLLAMA=true
@@ -101,6 +113,9 @@ cat > "${OUT}" <<EOF
 moltbot_preset: ${PRESET}
 
 moltbot_enable_voice: ${ENABLE_VOICE}
+voice_backend: ${VOICE_BACKEND}
+hermes_enable_npu_stt: ${ENABLE_HERMES_NPU}
+moltbot_enable_systemd_flm_asr: ${ENABLE_HERMES_NPU}
 moltbot_enable_ollama: ${ENABLE_OLLAMA}
 moltbot_enable_systemd_whisper: ${ENABLE_WHISPER_SVC}
 moltbot_enable_systemd_timer_worker: ${ENABLE_TIMER}

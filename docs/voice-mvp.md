@@ -1,4 +1,20 @@
-# Голосовой MVP (push-to-talk) на Linux
+# Голосовой стек homelab
+
+## Hermes (Phase 2)
+
+`микрофон → wake → STT → Hermes + Ollama → TTS`
+
+```bash
+make install-voice
+make install-voice-npu   # FastFlowLM NPU STT
+hermes doctor && hermes run "Привет"
+```
+
+См. [hermes-voice-npu.md](./hermes-voice-npu.md), [wake-word.md](./wake-word.md). Rollback: `voice_backend: legacy`.
+
+---
+
+## Legacy MVP (push-to-talk, moltbot-api)
 
 Цель: минимальная голосовая цепочка:
 

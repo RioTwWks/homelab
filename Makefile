@@ -26,7 +26,7 @@ ifdef EXTRA_VARS
   ANSIBLE_ARGS += $(EXTRA_VARS)
 endif
 
-.PHONY: help configure ansible-deps deploy install install-minimal install-voice install-full \
+.PHONY: help configure ansible-deps deploy install install-minimal install-voice install-voice-npu install-full \
         voice systemd up down ps health logs backup-timer check
 
 help: ## Show targets
@@ -52,11 +52,14 @@ install: ## Configure (if needed) + deploy + health check
 install-minimal: ## Preset: core stack + web UI
 	@$(MAKE) deploy EXTRA_VARS="-e moltbot_preset=minimal"
 
-install-voice: ## Preset: minimal + search + voice + whisper systemd
-	@$(MAKE) deploy EXTRA_VARS="-e moltbot_preset=voice -e moltbot_enable_voice=true -e moltbot_enable_systemd_whisper=true"
+install-voice: ## Preset: minimal + search + Hermes voice
+	@$(MAKE) deploy EXTRA_VARS="-e moltbot_preset=voice -e moltbot_enable_voice=true -e voice_backend=hermes -e moltbot_enable_systemd_whisper=false"
+
+install-voice-npu: ## Hermes voice + FastFlowLM NPU STT (flm-asr systemd)
+	@$(MAKE) deploy EXTRA_VARS="-e moltbot_preset=voice -e moltbot_enable_voice=true -e voice_backend=hermes -e hermes_enable_npu_stt=true -e moltbot_enable_systemd_flm_asr=true -e moltbot_enable_systemd_whisper=false"
 
 install-full: ## Preset: all compose profiles + backup timer
-	@$(MAKE) deploy EXTRA_VARS="-e moltbot_preset=full -e moltbot_enable_voice=true -e moltbot_enable_systemd_whisper=true -e moltbot_enable_backup_timer=true"
+	@$(MAKE) deploy EXTRA_VARS="-e moltbot_preset=full -e moltbot_enable_voice=true -e voice_backend=hermes -e moltbot_enable_systemd_whisper=false -e moltbot_enable_backup_timer=true"
 
 voice: ansible-deps ## Voice stack only (whisper, TTS, voice_mvp.env)
 	@test -f $(LOCAL_VARS) || { echo "Run 'make configure' first"; exit 1; }

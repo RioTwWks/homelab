@@ -21,4 +21,6 @@
     - role: systemd
       tags: [systemd]
       vars:
-        moltbot_enable_systemd_whisper: true
+        moltbot_enable_systemd_whisper: false
+        hermes_enable_npu_stt: "{{ hermes_enable_npu_stt | default(false) }}"
+        moltbot_enable_systemd_flm_asr: "{{ moltbot_enable_systemd_flm_asr | default(false) }}"

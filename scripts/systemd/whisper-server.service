@@ -1,3 +1,4 @@
+# LEGACY rollback — Hermes: docs/voice-mvp.md
 # Systemd unit для whisper-server (whisper.cpp).
 # Установка:
 #   sudo cp scripts/systemd/whisper-server.service /etc/systemd/system/
