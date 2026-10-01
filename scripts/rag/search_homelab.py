@@ -61,7 +61,8 @@ def main() -> int:
         with httpx.Client(base_url=ollama_base) as http:
             vector = embed_query(http, embed_model, args.query)
 
-    hits = QdrantClient(url=qdrant_url).search(collection_name=collection, query_vector=vector, limit=args.top_k)
+    client = QdrantClient(url=qdrant_url)
+    hits = client.query_points(collection_name=collection, query=vector, limit=args.top_k).points
     if not hits:
         print("[rag] no results")
         return 1
