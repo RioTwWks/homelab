@@ -44,7 +44,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 ```
 
 - **Ollama на хосте**, не в Docker. Контейнер ходит на `host.docker.internal:11434`.
-- **Профили** (`ha`, `ui`, `storage`, `photos`, `torrents`, `gitlab`, `search`) не стартуют без `--profile`.
+- **Профили** (`ha`, `ui`, `storage`, `photos`, `torrents`, `gitlab`, `monitoring`, `search`) не стартуют без `--profile`.
 - **Media:** нужен `MEDIA_EXECUTOR_URL` + скрипт на хосте (`scripts/media_executor_example.py`).
 - **Таймеры:** API пишет в Redis, на хосте нужен `scripts/timer_worker.py`.
 - **SearXNG из контейнера:** `SEARXNG_BASE_URL=http://searxng:8080`, не `localhost`.
@@ -57,6 +57,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | 18079 | moltbot-ui (profile `ui`) |
 | 8090 | media-api |
 | 8091 | media executor (host) |
+| 8092 | homelab mode executor (host) |
 | 11434 | Ollama (host) |
 | 8123 | Home Assistant (profile `ha`) |
 
@@ -80,6 +81,9 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/timers.md` | Таймеры, timer_worker |
 | `docs/storage-raid.md` | RAID override-файлы |
 | `docs/backup.md` | backup.sh, systemd timer |
+| `docs/homelab-modes.md` | AI / Gaming / Media, executor, Steam/Proton |
+| `docs/monitoring.md` | Prometheus, Grafana, all-smi |
+| `docs/remote-access.md` | AmneziaWG, Headscale, Cloudflare Tunnel |
 
 ## Подсказки для изменений
 

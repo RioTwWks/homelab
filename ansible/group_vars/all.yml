@@ -81,6 +81,23 @@ silero_venv: "{{ ansible_env.HOME }}/.venvs/silero"
 backup_dir: /backup/homelab
 backup_retention_days: 14
 
+# Remote access (docs/remote-access.md) — secrets only in local.yml
+remote_access_install_tailscale_client: false
+remote_access_headscale_login_server: ""
+remote_access_tailscale_authkey: ""
+remote_access_install_cloudflared: false
+remote_access_cloudflare_tunnel_name: homelab
+remote_access_cloudflare_tunnel_id: ""
+remote_access_cloudflare_credentials_path: /etc/cloudflared/credentials.json
+remote_access_cloudflare_config_path: /etc/cloudflared/config.yml
+remote_access_cloudflare_ingress:
+  - hostname: moltbot.example.com
+    service: http://localhost:18079
+  - hostname: api-moltbot.example.com
+    service: http://localhost:18080
+remote_access_tailscale_hostname: homelab
+remote_access_tailscale_accept_routes: true
+
 # Apt packages for common role
 homelab_apt_packages:
   - ca-certificates

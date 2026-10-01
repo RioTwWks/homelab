@@ -1,0 +1,117 @@
+---
+- name: Add Tailscale apt key
+  ansible.builtin.get_url:
+    url: https://pkgs.tailscale.com/stable/ubuntu/{{ ansible_distribution_release | default('noble') }}.noarmor.gpg
+    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    mode: "0644"
+  when:
+    - remote_access_install_tailscale_client | bool
+    - ansible_os_family == "Debian"
+
+- name: Add Tailscale apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu {{ ansible_distribution_release | default('noble') }} main"
+    filename: tailscale
+    state: present
+  when:
+    - remote_access_install_tailscale_client | bool
+    - ansible_os_family == "Debian"
+
+- name: Install tailscale package
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+    update_cache: true
+  when:
+    - remote_access_install_tailscale_client | bool
+    - ansible_os_family == "Debian"
+
+- name: Ensure tailscaled is enabled
+  ansible.builtin.systemd:
+    name: tailscaled
+    enabled: true
+    state: started
+  when: remote_access_install_tailscale_client | bool
+
+- name: Join Headscale / Tailscale mesh (accept routes)
+  ansible.builtin.command:
+    argv:
+      - tailscale
+      - up
+      - "--login-server={{ remote_access_headscale_login_server }}"
+      - "--authkey={{ remote_access_tailscale_authkey }}"
+      - "--hostname={{ remote_access_tailscale_hostname }}"
+      - --accept-routes
+  register: tailscale_up
+  changed_when: tailscale_up.rc == 0
+  when:
+    - remote_access_install_tailscale_client | bool
+    - remote_access_headscale_login_server | length > 0
+    - remote_access_tailscale_authkey | length > 0
+    - remote_access_tailscale_accept_routes | bool
+
+- name: Join Headscale / Tailscale mesh (no extra routes)
+  ansible.builtin.command:
+    argv:
+      - tailscale
+      - up
+      - "--login-server={{ remote_access_headscale_login_server }}"
+      - "--authkey={{ remote_access_tailscale_authkey }}"
+      - "--hostname={{ remote_access_tailscale_hostname }}"
+  register: tailscale_up_no_routes
+  changed_when: tailscale_up_no_routes.rc == 0
+  when:
+    - remote_access_install_tailscale_client | bool
+    - remote_access_headscale_login_server | length > 0
+    - remote_access_tailscale_authkey | length > 0
+    - not (remote_access_tailscale_accept_routes | bool)
+
+- name: Download cloudflared package
+  ansible.builtin.get_url:
+    url: https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+    dest: /tmp/cloudflared.deb
+    mode: "0644"
+  when:
+    - remote_access_install_cloudflared | bool
+    - ansible_architecture in ["x86_64", "amd64"]
+
+- name: Install cloudflared
+  ansible.builtin.apt:
+    deb: /tmp/cloudflared.deb
+    state: present
+  when:
+    - remote_access_install_cloudflared | bool
+    - ansible_architecture in ["x86_64", "amd64"]
+
+- name: Ensure cloudflared config directory
+  ansible.builtin.file:
+    path: "{{ remote_access_cloudflare_config_path | dirname }}"
+    state: directory
+    mode: "0755"
+  when: remote_access_install_cloudflared | bool
+
+- name: Deploy cloudflared config (no credentials in git)
+  ansible.builtin.template:
+    src: cloudflared-config.yml.j2
+    dest: "{{ remote_access_cloudflare_config_path }}"
+    mode: "0644"
+  when:
+    - remote_access_install_cloudflared | bool
+    - remote_access_cloudflare_tunnel_id | length > 0
+  notify: Restart cloudflared
+
+- name: Install cloudflared systemd unit
+  ansible.builtin.template:
+    src: cloudflared.service.j2
+    dest: /etc/systemd/system/cloudflared.service
+    mode: "0644"
+  when: remote_access_install_cloudflared | bool
+  notify: Reload systemd
+
+- name: Enable cloudflared service
+  ansible.builtin.systemd:
+    name: cloudflared
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: remote_access_install_cloudflared | bool
