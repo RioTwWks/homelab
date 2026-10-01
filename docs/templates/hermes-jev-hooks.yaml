@@ -1,0 +1,22 @@
+# Fragment for ~/.hermes/config.yaml — Phase 3 Jev hooks
+# Paths assume repo at ~/homelab (adjust HOMELAB_ROOT).
+
+# Consent once per hook command (or set hooks_auto_accept: true in dev only):
+#   hermes hooks list && hermes hooks doctor
+
+hooks:
+  pre_tool_call:
+    - matcher: "terminal|write_file|patch|web_fetch|mcp__.*"
+      command: "~/homelab/hermes/hooks/jev_pre_tool_call.sh"
+      timeout: 30
+      fail_closed: true
+  post_llm_call:
+    - command: "~/homelab/hermes/hooks/jev_post_response.sh"
+      timeout: 45
+
+# Env (add to ~/.hermes/.env or shell profile):
+# JEV_STYLE_VENV=$HOME/.venvs/jev-style
+# JEV_STYLE_URL=http://127.0.0.1:8765/v1   # when scripts/jev_style_serve.sh is running
+# JEV_STYLE_RELEASE=2b-v3                  # Jev-Style-2B-Decision-v3
+# JEV_QUALITY_SCORE_THRESHOLD=0.7
+# JEV_QUALITY_LOG_PATH=~/.local/state/jev-style-guard/quality.jsonl

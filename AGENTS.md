@@ -80,6 +80,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/timers.md` | Таймеры, timer_worker |
 | `docs/storage-raid.md` | RAID override-файлы |
 | `docs/backup.md` | backup.sh, systemd timer |
+| `docs/jev-hooks.md` | Jev PreToolUse gate, quality logging (фаза 3) |
 
 ## Подсказки для изменений
 
