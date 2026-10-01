@@ -19,7 +19,8 @@ alwaysApply: false
 | `storage` | nextcloud + db | 18082 |
 | `photos` | immich stack | 18083 |
 | `torrents` | qbittorrent, stremio, torrserver, jacred | 18084+ |
-| `gitlab` | gitlab, grafana, runner | 18090 |
+| `gitlab` | gitlab, runner | 18090 |
+| `monitoring` | prometheus, grafana, node-exporter, blackbox-exporter | 18091, 19090 |
 | `search` | searxng | 18081 |
 
 Пример: `docker compose --profile ui --profile ha up -d`

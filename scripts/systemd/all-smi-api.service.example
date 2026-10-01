@@ -1,0 +1,26 @@
+# Prometheus metrics API for AMD iGPU / Ryzen AI NPU (all-smi).
+# Install binary from https://github.com/lablup/all-smi/releases
+#
+#   sudo cp scripts/systemd/all-smi-api.service.example /etc/systemd/system/all-smi-api.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now all-smi-api.service
+#
+# Metrics: http://localhost:19095/metrics
+
+[Unit]
+Description=all-smi Prometheus metrics API (homelab)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=ALL_SMI_API_PORT=19095
+# Adjust path after installing the release binary:
+ExecStart=/usr/local/bin/all-smi api --port 19095
+Restart=on-failure
+RestartSec=5
+# Needs read access to GPU/NPU devices:
+SupplementaryGroups=video render
+
+[Install]
+WantedBy=multi-user.target

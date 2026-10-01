@@ -1,6 +1,6 @@
 # GitLab в homelab
 
-GitLab (CE), Grafana и GitLab Runner поднимаются профилем `gitlab`. Ниже — что делать после первого запуска и как перенести старый инстанс.
+GitLab (CE) и GitLab Runner поднимаются профилем `gitlab`. **Grafana** и standalone **Prometheus** — профиль `monitoring` (`docs/monitoring.md`). Ниже — что делать после первого запуска и как перенести старый инстанс.
 
 ---
 
@@ -29,7 +29,7 @@ GitLab (CE), Grafana и GitLab Runner поднимаются профилем `g
 | Что | Куда / URL |
 |-----|------------|
 | Веб GitLab | `http://localhost:18090` |
-| Grafana | `http://localhost:18091` (логин admin, пароль в `.env`: `GRAFANA_ADMIN_PASSWORD`) |
+| Grafana | `http://localhost:18091` — `docker compose --profile monitoring up -d` (см. `docs/monitoring.md`) |
 | Конфиг Runner | `~/homelab/gitlab-runner-config/config.toml` |
 
 ---
@@ -125,7 +125,7 @@ cd ~/homelab
 docker compose --profile gitlab up -d
 ```
 
-Веб: `http://localhost:18090`, SSH: порт 2222, Registry: 5005, Grafana: `http://localhost:18091`.
+Веб: `http://localhost:18090`, SSH: порт 2222, Registry: 5005. Grafana: профиль `monitoring` — `docs/monitoring.md`.
 
 ## Перенос GitLab Runner
 
