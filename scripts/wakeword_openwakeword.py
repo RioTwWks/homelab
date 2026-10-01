@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+DEPRECATED (Phase 2): use Hermes `/wake on` — docs/wake-word.md.
+
 Wake word listener using openWakeWord. On detection runs a command (e.g. voice_mvp.sh).
 
 Usage:

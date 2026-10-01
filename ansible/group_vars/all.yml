@@ -68,8 +68,24 @@ nextcloud_trusted_domains: "localhost 127.0.0.1"
 gitlab_external_url: http://localhost:18090
 grafana_admin_password: admin
 
-# Voice (host)
+# Voice (host) — Hermes default (Phase 2); legacy whisper.cpp optional
+voice_backend: hermes
 voice_user: "{{ ansible_user_id | default(lookup('env', 'USER')) }}"
+hermes_home: "{{ ansible_env.HOME }}/.hermes"
+hermes_ollama_base_url: http://127.0.0.1:11434
+hermes_llm_model: qwen3:8b
+hermes_context_length: 65536
+hermes_stt_language: ru
+hermes_faster_whisper_model: base
+hermes_wake_word_en: hey hermes
+hermes_wake_word_ru: "привет хермес"
+hermes_edge_voice: ru-RU-DmitryNeural
+hermes_enable_npu_stt: false
+flm_serve_model: gemma3:1b
+flm_serve_port: 52625
+flm_pmode: powersaver
+moltbot_enable_systemd_flm_asr: false
+
 whisper_cpp_dir: "{{ ansible_env.HOME }}/.local/src/whisper.cpp"
 whisper_model_name: medium
 whisper_server_port: 8099

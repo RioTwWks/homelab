@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Silero TTS — Hermes Edge TTS is primary; fallback/tests (docs/voice-mvp.md)."""
 import argparse
 import re
 import math

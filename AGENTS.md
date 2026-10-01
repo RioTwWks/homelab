@@ -12,7 +12,7 @@
 | `moltbot_ui/` | Статический веб-UI (nginx, профиль `ui`) |
 | `scripts/` | Host: голос, backup, media executor, timer worker, systemd |
 | `docs/` | Операционная документация |
-| `hermes/` | Hermes skills + CLI (фаза 1) |
+| `hermes/` | Hermes Agent: skills + CLI (миграция с moltbot-api, фаза 1+) |
 | `docker-compose.yml` | Основной стек |
 | `docker-compose.raid*.example.yml` | **Override**, не standalone |
 | `.cursor/rules/` | Cursor project rules (`.mdc`) |
@@ -84,7 +84,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/timers.md` | Таймеры, timer_worker |
 | `docs/storage-raid.md` | RAID override-файлы |
 | `docs/backup.md` | backup.sh, systemd timer |
-| `docs/hermes-phase1-runbook.md` | Hermes install, config ≥64K |
+| `docs/hermes-phase1-runbook.md` | Hermes: установка, config ≥64K, skills |
 | `docs/rag-qdrant.md` | Qdrant RAG ingest, Hermes integration |
 | `docs/homelab-modes.md` | AI / Gaming / Media, executor, Steam/Proton |
 | `docs/opencode.md` | OpenCode + Ollama (кодинг, `~/.config/opencode`) |

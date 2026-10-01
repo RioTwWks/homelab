@@ -1,0 +1,48 @@
+---
+- name: Ensure Hermes home directory exists
+  ansible.builtin.file:
+    path: "{{ hermes_home }}"
+    state: directory
+    mode: "0755"
+
+- name: Install Hermes Agent (official installer)
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+    creates: "{{ hermes_home }}/config.yaml"
+  environment:
+    HOME: "{{ ansible_env.HOME }}"
+
+- name: Create Silero venv (Hermes TTS fallback / tests)
+  ansible.builtin.command:
+    cmd: "python3 -m venv {{ silero_venv }}"
+    creates: "{{ silero_venv }}/bin/python"
+
+- name: Install Silero dependencies for fallback TTS
+  ansible.builtin.pip:
+    name:
+      - torch
+      - torchaudio
+      - omegaconf
+      - num2words
+    virtualenv: "{{ silero_venv }}"
+    state: present
+
+- name: Install FastFlowLM for NPU STT
+  ansible.builtin.pip:
+    name: fastflowlm
+    state: present
+    executable: pip3
+  when: hermes_enable_npu_stt | bool
+
+- name: Render Hermes voice config
+  ansible.builtin.template:
+    src: hermes.config.yaml.j2
+    dest: "{{ hermes_home }}/config.yaml"
+    mode: "0644"
+  notify: Hermes config updated
+
+- name: Render homelab Hermes voice env helper
+  ansible.builtin.template:
+    src: hermes_voice.env.j2
+    dest: "{{ moltbot_install_dir }}/scripts/hermes_voice.env"
+    mode: "0644"
