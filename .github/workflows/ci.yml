@@ -97,15 +97,16 @@ jobs:
           docker compose -f docker-compose.yml config --quiet
           docker compose -f docker-compose.yml -f docker-compose.raid.example.yml config --quiet
           docker compose -f docker-compose.yml -f docker-compose.raid-full.example.yml config --quiet
+          docker compose --profile monitoring config --quiet
 
-  homelab-runbook-remote-access-opencode:
-    name: Remote access + OpenCode (offline)
+  homelab-runbook-voice-monitoring:
+    name: Voice / NPU + monitoring runbook (offline)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Ansible
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ansible-core jq
+      - name: Install Ansible + PyYAML
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ansible-core python3-yaml
 
-      - name: Verify runbook (Ansible + OpenCode JSON)
-        run: bash scripts/verify-runbook-remote-access-opencode.sh
+      - name: Verify runbook (voice Ansible, monitoring configs)
+        run: bash scripts/verify-runbook-voice-monitoring.sh

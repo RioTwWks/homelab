@@ -89,6 +89,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/homelab-modes.md` | AI / Gaming / Media, executor, Steam/Proton |
 | `docs/opencode.md` | OpenCode + Ollama (кодинг, `~/.config/opencode`) |
 | `docs/monitoring.md` | Prometheus, Grafana, all-smi |
+| `docs/runbook-voice-monitoring.md` | B2 runbook: voice/NPU + monitoring validate & host steps |
 | `docs/remote-access.md` | AmneziaWG, Headscale, Cloudflare Tunnel |
 | `docs/jev-hooks.md` | Jev PreToolUse gate, quality logging (фаза 3) |
 

@@ -17,7 +17,6 @@ bash "$ROOT/scripts/verify/compose-config.sh" >/dev/null 2>&1 || {
 }
 
 echo "==> monitoring/ YAML and JSON"
-python3 -m pip install --quiet pyyaml 2>/dev/null || true
 python3 "$ROOT/scripts/validate_monitoring_configs.py"
 
 echo "==> scripts/flm_validate.sh (bash -n)"

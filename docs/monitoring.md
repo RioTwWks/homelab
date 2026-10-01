@@ -1,5 +1,7 @@
 # Мониторинг (Prometheus + Grafana)
 
+Чеклист валидации и host-only шаги (Agent B2): [runbook-voice-monitoring.md](./runbook-voice-monitoring.md).
+
 Отдельный Docker Compose профиль **`monitoring`**: метрики хоста (CPU, RAM, диск), энергопотребление **iGPU/NPU** через [all-smi](https://github.com/lablup/all-smi) на хосте, задержки **Ollama** и **moltbot-api** через blackbox-exporter.
 
 Grafana и standalone Prometheus **не** входят в профиль `gitlab` (фаза 7 homelab redesign). Встроенный Prometheus GitLab Omnibus по-прежнему доступен на порту `9090`, только если поднят `gitlab`.

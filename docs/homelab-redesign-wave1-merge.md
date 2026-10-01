@@ -24,18 +24,24 @@
 cd ~/homelab   # или ваш путь к клону
 git pull origin main
 
-# Валидация
-docker compose -f docker-compose.yml config --quiet
+# Docker Compose офлайн (Agent B1): default, ui, monitoring, search + raid overlays
+bash scripts/verify/compose-config.sh
+# exit 0; последняя строка: OK: docker compose config (default, ui, monitoring, search, raid overlays)
+
+# Hermes офлайн (Agent B1)
+bash scripts/hermes-install-skills.sh   # 6 symlink в ~/.hermes/skills/homelab/
+set -a && source scripts/hermes-env.sh && set +a
+# REDIS_URL=redis://127.0.0.1:6379/0 MEDIA_API_BASE_URL=http://127.0.0.1:8090 SEARXNG_BASE_URL=http://127.0.0.1:18081
+bash scripts/hermes-validate-tools.sh   # 8 passed; OK: Hermes homelab tools (offline pytest)
+python3 -m venv .venv-ci && .venv-ci/bin/pip install -q -r moltbot_api/requirements.txt -r moltbot_api/requirements-dev.txt
+.venv-ci/bin/python -m pytest hermes/tests/test_tool_parsers.py -v   # 4 passed
+
+# Валидация (репозиторий; NPU не нужен)
+make check
 python3 -m pytest moltbot_api/tests/test_homelab_mode.py -q
 python3 -m pytest hermes/tests/ -q
 bash scripts/test_jev_hooks.sh
-ansible-playbook --syntax-check ansible/playbooks/site.yml
-ansible-playbook --syntax-check ansible/playbooks/voice.yml
-ansible-playbook --syntax-check ansible/playbooks/remote_access.yml
-
-# Hermes Phase 1
-bash scripts/hermes-install-skills.sh
-bash scripts/hermes-validate-tools.sh
+# Хостовые шаги voice/NPU/monitoring: docs/runbook-voice-monitoring.md
 
 # Compose (по необходимости)
 docker compose --profile ui up -d --build
@@ -60,6 +66,8 @@ sudo cp scripts/systemd/homelab-mode-*.service scripts/systemd/homelab-mode-sync
 sudo systemctl daemon-reload
 # runtime/homelab-mode/state.json — см. docs/homelab-modes.md
 ```
+
+**Compose-профили (ориентир по `config --services`):** default — 5 сервисов; `--profile ui` — 6; `--profile monitoring` — 9; `--profile search` — 6. Подробнее: `docs/hermes-phase1-runbook.md`, CI job **Docker Compose validate**.
 
 ## Связанные draft PR (закрыть после merge wave PR)
 
