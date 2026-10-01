@@ -90,6 +90,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/opencode.md` | OpenCode + Ollama (кодинг, `~/.config/opencode`) |
 | `docs/monitoring.md` | Prometheus, Grafana, all-smi |
 | `docs/remote-access.md` | AmneziaWG, Headscale, Cloudflare Tunnel |
+| `docs/jev-hooks.md` | Jev PreToolUse gate, quality logging (фаза 3) |
 
 ## Подсказки для изменений
 
