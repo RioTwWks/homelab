@@ -36,13 +36,16 @@ bash scripts/hermes-validate-tools.sh   # 8 passed; OK: Hermes homelab tools (of
 python3 -m venv .venv-ci && .venv-ci/bin/pip install -q -r moltbot_api/requirements.txt -r moltbot_api/requirements-dev.txt
 .venv-ci/bin/python -m pytest hermes/tests/test_tool_parsers.py -v   # 4 passed
 
-# Валидация
+# Валидация (репозиторий; NPU не нужен)
+make check
 python3 -m pytest moltbot_api/tests/test_homelab_mode.py -q
 python3 -m pytest hermes/tests/ -q
 bash scripts/test_jev_hooks.sh
+bash scripts/verify-runbook-voice-monitoring.sh
 ansible-playbook --syntax-check ansible/playbooks/site.yml
 ansible-playbook --syntax-check ansible/playbooks/voice.yml
 ansible-playbook --syntax-check ansible/playbooks/remote_access.yml
+# Хостовые шаги voice/NPU/monitoring: docs/runbook-voice-monitoring.md
 
 # Compose (по необходимости)
 docker compose --profile ui up -d --build
@@ -68,7 +71,7 @@ sudo systemctl daemon-reload
 # runtime/homelab-mode/state.json — см. docs/homelab-modes.md
 ```
 
-**Compose-профили (ориентир по `config --services`):** default — 5; `--profile ui` — 6; `--profile monitoring` — 9; `--profile search` — 6. CI: job **Docker Compose validate** → `scripts/verify/compose-config.sh`. Hermes: `docs/hermes-phase1-runbook.md`.
+**Compose-профили (ориентир по `config --services`):** default — 5; `--profile ui` — 6; `--profile monitoring` — 9; `--profile search` — 6. CI: job **Docker Compose validate** → `scripts/verify/compose-config.sh`; voice/monitoring: **homelab-runbook-voice-monitoring** → `scripts/verify-runbook-voice-monitoring.sh`. Hermes: `docs/hermes-phase1-runbook.md`, voice: `docs/runbook-voice-monitoring.md`.
 
 ## Связанные draft PR (закрыть после merge wave PR)
 
