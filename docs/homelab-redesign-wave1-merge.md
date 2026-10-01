@@ -66,3 +66,17 @@ sudo systemctl daemon-reload
 - #12 A1, #13 A3, #9 A2, #11 A5, #10 A8, #5 A4, #6 A7, #7 A6
 
 **Не включено:** A9 / 128GB phase.
+
+## Post-merge runbook — Agent B3 (RAG фаза 6 + modes фаза 9)
+
+Ветка проверки: `cursor/runbook-rag-modes-62e2`.
+
+| Область | Проверка | Результат (2026-10-01) |
+|---------|----------|------------------------|
+| Compose | `qdrant` в базовом стеке, `moltbot-api` → `QDRANT_URL`, `depends_on: qdrant`, том `runtime/homelab-mode` | OK |
+| RAG ingest | `./scripts/rag/ingest.sh --dry-run` | OK (67 files, 403 chunks) |
+| RAG smoke | `--fake-embeddings --limit-chunks 5` + `search` при поднятом Qdrant | OK |
+| Modes API | `pytest moltbot_api/tests/test_homelab_mode.py` | 3 passed |
+| Modes host | `bash -n scripts/homelab_mode.sh`; `docs/homelab-modes.md` ↔ `homelab_mode.py` / executor `:8092` | OK |
+
+Автоматизация: `bash scripts/verify-runbook-rag-modes.sh` (без Qdrant — dry-run + pytest; с `docker compose up -d qdrant` — полный fake-embeddings smoke).
