@@ -315,21 +315,6 @@ services:
     shm_size: '256m'
     profiles: ["gitlab"]
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    restart: unless-stopped
-    ports:
-      - "${GRAFANA_PORT:-18091}:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana_data:/var/lib/grafana
-    depends_on:
-      - gitlab
-    profiles: ["gitlab"]
-
   # GitLab Runner — выполняет пайплайны (Docker executor). Конфиг: gitlab-runner-config/config.toml
   gitlab-runner:
     image: gitlab/gitlab-runner:latest
@@ -361,6 +346,70 @@ services:
     restart: unless-stopped
     profiles: ["search"]
 
+  # Optional: Prometheus + Grafana + host metrics (профиль monitoring).
+  # Запуск: docker compose --profile monitoring up -d
+  # Grafana: http://localhost:18091 , Prometheus UI: http://localhost:19090
+  # all-smi на хосте (энергия NPU/iGPU): docs/monitoring.md
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: homelab-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "${PROMETHEUS_PORT:-19090}:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/blackbox.yml:/etc/prometheus/blackbox.yml:ro
+      - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    profiles: ["monitoring"]
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: homelab-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-18091}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    profiles: ["monitoring"]
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    container_name: homelab-node-exporter
+    restart: unless-stopped
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    profiles: ["monitoring"]
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.26.0
+    container_name: homelab-blackbox-exporter
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/blackbox_exporter/config.yml
+    volumes:
+      - ./monitoring/prometheus/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    profiles: ["monitoring"]
+
 volumes:
   redis_data:
   qdrant_data:
@@ -383,3 +432,4 @@ volumes:
   gitlab_logs:
   gitlab_data:
   grafana_data:
+  prometheus_data:

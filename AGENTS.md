@@ -73,7 +73,9 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 
 | Документ | Тема |
 |----------|------|
-| `docs/voice-mvp.md` | Push-to-talk, Whisper, TTS |
+| `docs/voice-mvp.md` | Hermes voice + legacy push-to-talk |
+| `docs/hermes-voice-npu.md` | FastFlowLM NPU STT, `flm validate` |
+| `docs/wake-word.md` | Hermes wake word + legacy openWakeWord |
 | `docs/media-control.md` | media-api, executor, Kodi |
 | `docs/home-assistant.md` | HA, голосовые команды |
 | `docs/web-search.md` | SearXNG, WEB_SEARCH_PROVIDER |
