@@ -96,8 +96,10 @@ backup-timer: ansible-deps ## Enable homelab-backup systemd timer
 	@test -f $(LOCAL_VARS) || { echo "Run 'make configure' first"; exit 1; }
 	$(ANSIBLE) $(PLAYBOOK_SITE) --tags backup $(ANSIBLE_ARGS)
 
-check: ## Syntax-check Ansible playbooks
+check: ## Syntax-check Ansible playbooks + validate config/opencode/opencode.json
 	@command -v ansible-playbook >/dev/null || { echo "ansible-playbook not found"; exit 1; }
+	@command -v jq >/dev/null || { echo "jq not found (needed for OpenCode config)"; exit 1; }
 	$(ANSIBLE) $(PLAYBOOK_SITE) --syntax-check
 	$(ANSIBLE) $(PLAYBOOK_VOICE) --syntax-check
 	$(ANSIBLE) $(PLAYBOOK_REMOTE_ACCESS) --syntax-check
+	@jq empty $(ROOT_DIR)/config/opencode/opencode.json
