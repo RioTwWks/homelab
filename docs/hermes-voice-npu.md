@@ -1,6 +1,7 @@
 # Hermes voice + NPU STT (FastFlowLM)
 
-Homelab redesign **Phase 2** (Hermes wake/STT/TTS) and **Phase 4** (NPU STT).
+Homelab redesign **Phase 2** (Hermes wake/STT/TTS) and **Phase 4** (NPU STT).  
+Операционный чеклист и разделение «репозиторий vs хост»: [runbook-voice-monitoring.md](./runbook-voice-monitoring.md).
 
 ## Phase 2 acceptance
 

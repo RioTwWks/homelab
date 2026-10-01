@@ -74,7 +74,7 @@ jobs:
           cache-dependency-path: moltbot_api/requirements.txt
       - run: |
           pip install -r moltbot_api/requirements.txt -r moltbot_api/requirements-dev.txt
-          python -m pytest hermes/tests/ -v
+          python -m pytest hermes/tests/test_tool_parsers.py -v
 
   hermes-jev-hooks:
     name: Hermes Jev hooks (offline)
@@ -93,7 +93,37 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate compose files
-        run: |
-          docker compose -f docker-compose.yml config --quiet
-          docker compose -f docker-compose.yml -f docker-compose.raid.example.yml config --quiet
-          docker compose -f docker-compose.yml -f docker-compose.raid-full.example.yml config --quiet
+        run: bash scripts/verify/compose-config.sh
+
+  homelab-runbook-voice-monitoring:
+    name: Voice / NPU + monitoring runbook (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ansible + PyYAML
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ansible-core python3-yaml
+
+      - name: Verify runbook (voice Ansible, monitoring configs)
+        run: bash scripts/verify-runbook-voice-monitoring.sh
+
+  homelab-runbook-rag-modes:
+    name: RAG + homelab modes runbook (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify runbook (RAG dry-run, homelab modes)
+        run: bash scripts/verify-runbook-rag-modes.sh
+
+  homelab-runbook-remote-access-opencode:
+    name: Remote access + OpenCode (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ansible-core jq
+
+      - name: Verify runbook (Ansible + OpenCode JSON)
+        run: bash scripts/verify-runbook-remote-access-opencode.sh

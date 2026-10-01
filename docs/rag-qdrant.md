@@ -11,7 +11,7 @@ ollama pull nomic-embed-text
 
 ./scripts/rag/ingest.sh --dry-run
 ./scripts/rag/ingest.sh
-.venv-rag/bin/python scripts/rag/search_homelab.py "профиль storage docker compose"
+./scripts/rag/search.sh "профиль storage docker compose"
 ```
 
 Коллекция: **`homelab_knowledge`**. Индекс: `docs/`, `moltbot_api/app/`, `media_api/app/`, `scripts/`, `README.md`, `AGENTS.md`.
@@ -30,7 +30,7 @@ ollama pull nomic-embed-text
 
 ```bash
 ./scripts/rag/ingest.sh --fake-embeddings --recreate-collection --limit-chunks 50
-.venv-rag/bin/python scripts/rag/search_homelab.py --fake-embeddings "docker compose"
+./scripts/rag/search.sh --fake-embeddings "docker compose"
 ```
 
 ## Hermes

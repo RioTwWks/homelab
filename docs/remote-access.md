@@ -217,9 +217,12 @@ sudo systemctl disable --now cloudflared
 Переменные по умолчанию — `ansible/group_vars/all.yml`; секреты — `ansible/group_vars/local.yml` (см. `local.yml.example`).
 
 ```bash
-make check                    # syntax-check всех playbooks
+make check                    # syntax-check playbooks + jq config/opencode/opencode.json
 make remote-access            # после configure и local.yml
+bash scripts/verify-runbook-remote-access-opencode.sh   # офлайн-проверка для CI (runbook B4)
 ```
+
+Цель **`make remote-access`**: `ansible-deps`, проверка `ansible/group_vars/local.yml`, затем `ansible-playbook playbooks/remote_access.yml` (флаги — через `EXTRA_VARS`, см. Headscale и Cloudflare выше).
 
 ---
 

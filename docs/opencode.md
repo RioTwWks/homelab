@@ -67,6 +67,14 @@ cp config/opencode/opencode.json ~/.config/opencode/opencode.json
 
 Исходник в git: [`config/opencode/opencode.json`](../config/opencode/opencode.json).
 
+Проверка JSON в репозитории (без установки OpenCode):
+
+```bash
+jq empty config/opencode/opencode.json
+make check   # включает remote_access.yml и opencode.json — см. docs/remote-access.md
+bash scripts/verify-runbook-remote-access-opencode.sh
+```
+
 ---
 
 ## Ollama: модель и контекст ≥64K

@@ -50,6 +50,19 @@ def _guard_to_hermes(emitted: dict[str, Any] | None, reason: str) -> dict[str, A
     return {}
 
 
+def _offline_guard_enabled() -> bool:
+    flag = os.environ.get("HERMES_GUARD_OFFLINE", "").strip().lower()
+    if flag in ("1", "true", "yes", "on"):
+        return True
+    if flag in ("0", "false", "no", "off"):
+        return False
+    try:
+        import jev_style  # noqa: F401
+    except ImportError:
+        return True
+    return False
+
+
 def main() -> int:
     try:
         raw = json.loads(sys.stdin.read() or "{}")
@@ -60,14 +73,29 @@ def main() -> int:
     if not os.environ.get("JEV_STYLE_GUARD_CONFIG") and DEFAULT_GUARD_CONFIG.is_file():
         os.environ.setdefault("JEV_STYLE_GUARD_CONFIG", str(DEFAULT_GUARD_CONFIG))
 
-    from jev_style import guard
-
-    cfg = guard.load_config(os.environ.get("JEV_STYLE_GUARD_CONFIG"))
     hook_input = _hermes_to_guard_payload(raw if isinstance(raw, dict) else {})
-    res = guard.evaluate(hook_input, cfg)
-    emitted = guard.hook_output(res, cfg)
-    guard.write_log(cfg, hook_input, res, emitted)
-    out = _guard_to_hermes(emitted, guard.reason_text(res))
+    config_path = os.environ.get("JEV_STYLE_GUARD_CONFIG")
+
+    if _offline_guard_enabled():
+        hooks_dir = Path(__file__).resolve().parent
+        if str(hooks_dir) not in sys.path:
+            sys.path.insert(0, str(hooks_dir))
+        import guard_offline
+
+        cfg = guard_offline.load_config(config_path)
+        res = guard_offline.evaluate(hook_input, cfg)
+        emitted = guard_offline.hook_output(res, cfg)
+        reason = guard_offline.reason_text(res)
+    else:
+        from jev_style import guard
+
+        cfg = guard.load_config(config_path)
+        res = guard.evaluate(hook_input, cfg)
+        emitted = guard.hook_output(res, cfg)
+        guard.write_log(cfg, hook_input, res, emitted)
+        reason = guard.reason_text(res)
+
+    out = _guard_to_hermes(emitted, reason)
     if out:
         print(json.dumps(out, ensure_ascii=False))
     return 0
