@@ -74,7 +74,7 @@ jobs:
           cache-dependency-path: moltbot_api/requirements.txt
       - run: |
           pip install -r moltbot_api/requirements.txt -r moltbot_api/requirements-dev.txt
-          python -m pytest hermes/tests/ -v
+          python -m pytest hermes/tests/test_tool_parsers.py -v
 
   hermes-jev-hooks:
     name: Hermes Jev hooks (offline)

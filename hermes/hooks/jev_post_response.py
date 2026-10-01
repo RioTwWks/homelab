@@ -64,16 +64,36 @@ def _score_from_answers(answers: dict[str, Any]) -> float:
     return pts / weight if weight else 0.0
 
 
+def _offline_fake_quality(state: str) -> dict[str, Any]:
+    """Deterministic stand-in when jev-style is not installed (CI / offline)."""
+    _ = state
+    return {
+        "model": "hermes-quality-fake",
+        "answers": {
+            "on_topic": {"p_true": 0.85},
+            "grounded": {"p_true": 0.85},
+            "safe": {"p_true": 0.85},
+            "quality": {"choice": "high"},
+        },
+    }
+
+
 def _call_jev(state: str) -> dict[str, Any]:
     url = os.environ.get("JEV_STYLE_URL")
     release = os.environ.get("JEV_STYLE_RELEASE", "2b-v3")
     fake = os.environ.get("JEV_STYLE_QUALITY_FAKE", "").lower() in ("1", "true", "yes")
+    if fake:
+        try:
+            from jev_style.client import JevStyle
+
+            return JevStyle(fake=True).decide(state, _quality_questions())
+        except ImportError:
+            return _offline_fake_quality(state)
+
     from jev_style.client import JevStyle, JevStyleError
 
     kwargs: dict[str, Any] = {}
-    if fake:
-        kwargs["fake"] = True
-    elif not url:
+    if not url:
         kwargs["release"] = release
     client = JevStyle(base_url=url, **kwargs) if url else JevStyle(**kwargs)
     try:
