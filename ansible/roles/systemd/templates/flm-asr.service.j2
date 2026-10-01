@@ -1,0 +1,20 @@
+[Unit]
+Description=FastFlowLM ASR server for Hermes (NPU STT)
+Documentation=file:{{ moltbot_install_dir }}/docs/hermes-voice-npu.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ voice_user }}
+Group={{ voice_user }}
+WorkingDirectory={{ moltbot_install_dir }}
+EnvironmentFile=-{{ moltbot_install_dir }}/scripts/hermes_voice.env
+ExecStart={{ moltbot_install_dir }}/scripts/flm_asr_serve.sh
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -156,7 +156,9 @@ docker compose --profile photos up -d
 docker compose --profile gitlab up -d
 ```
 
-По умолчанию: веб `http://localhost:18090`, SSH порт 2222, Registry порт 5005, Grafana `http://localhost:18091`. В `.env` можно задать `GITLAB_EXTERNAL_URL`, `GITLAB_HTTP_PORT` и др.
+По умолчанию: веб `http://localhost:18090`, SSH порт 2222, Registry порт 5005. В `.env` можно задать `GITLAB_EXTERNAL_URL`, `GITLAB_HTTP_PORT` и др.
+
+Grafana и Prometheus — профиль **`monitoring`** (не `gitlab`): `docker compose --profile monitoring up -d`, дашборды и all-smi — `docs/monitoring.md`.
 
 Вместе с профилем поднимается **GitLab Runner** (конфиг в `gitlab-runner-config/config.toml`; пример — `config.toml.example`). Перенос существующего GitLab и Runner из другой директории: `docs/gitlab-migration.md`.
 
@@ -178,4 +180,6 @@ docker compose --profile gitlab up -d
 - Торренты (фильмы/сериалы/музыка из загрузок): qBittorrent (профиль `torrents`), папка загрузок — источник в Kodi; голос: «открой торренты». `docs/torrents.md`.
 - Черновики статей (Habr, Telegram): `docs/drafts/`.
 - Резервное копирование всей системы (как RAID для файлов/фото): вся система на RAID — `docker-compose.raid-full.example.yml` (см. `docs/storage-raid.md`); автоматический бэкап по расписанию — `scripts/backup.sh` + systemd timer в `scripts/systemd/`. Подробно: `docs/backup.md`.
+- Кодинг-ассистент OpenCode + Ollama (`qwen3-coder:30b`, контекст ≥64K): `docs/opencode.md`, пример конфига — `config/opencode/opencode.json`.
+- Удалённый доступ (AmneziaWG, Headscale, Cloudflare Tunnel): `docs/remote-access.md`, Ansible: `make remote-access`.
 

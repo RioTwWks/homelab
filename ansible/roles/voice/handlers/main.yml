@@ -1,0 +1,6 @@
+---
+- name: Hermes config updated
+  ansible.builtin.debug:
+    msg: >-
+      Updated {{ hermes_home }}/config.yaml — run `hermes doctor`, `/wake on`
+      (see docs/voice-mvp.md).

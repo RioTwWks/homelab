@@ -1,0 +1,10 @@
+# Managed by Ansible — credentials file must exist on host (not in git).
+tunnel: {{ remote_access_cloudflare_tunnel_name }}
+credentials-file: {{ remote_access_cloudflare_credentials_path }}
+
+ingress:
+{% for rule in remote_access_cloudflare_ingress %}
+  - hostname: {{ rule.hostname }}
+    service: {{ rule.service }}
+{% endfor %}
+  - service: http_status:404

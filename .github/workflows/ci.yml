@@ -62,6 +62,30 @@ jobs:
       - name: Test
         run: flutter test
 
+  hermes-tools:
+    name: Hermes homelab tools (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: moltbot_api/requirements.txt
+      - run: |
+          pip install -r moltbot_api/requirements.txt -r moltbot_api/requirements-dev.txt
+          python -m pytest hermes/tests/ -v
+
+  hermes-jev-hooks:
+    name: Hermes Jev hooks (offline)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: bash scripts/test_jev_hooks.sh
+
   docker-compose:
     name: Docker Compose validate
     runs-on: ubuntu-latest

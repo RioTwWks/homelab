@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Helper to run whisper.cpp whisper-server with a preloaded model.
-# Keep this running in a separate terminal.
+# DEPRECATED (Phase 2): use Hermes STT — docs/voice-mvp.md
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${ROOT_DIR}/scripts/voice_mvp.env"

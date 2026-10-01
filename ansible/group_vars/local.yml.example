@@ -37,3 +37,14 @@ tts_engine: piper
 
 backup_dir: /backup/homelab
 backup_retention_days: 14
+
+# Remote access — see docs/remote-access.md (never commit real keys)
+# remote_access_install_tailscale_client: true
+# remote_access_headscale_login_server: https://headscale.example.ru
+# remote_access_tailscale_authkey: tskey-auth-...
+# remote_access_install_cloudflared: true
+# remote_access_cloudflare_tunnel_id: 00000000-0000-0000-0000-000000000000
+# remote_access_cloudflare_credentials_path: /etc/cloudflared/00000000-0000-0000-0000-000000000000.json
+# remote_access_cloudflare_ingress:
+#   - hostname: moltbot.example.com
+#     service: http://localhost:18079

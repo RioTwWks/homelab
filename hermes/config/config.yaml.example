@@ -1,0 +1,14 @@
+model:
+  provider: ollama
+  base_url: http://127.0.0.1:11434
+  model: qwen3:8b
+  context_length: 65536
+
+skills:
+  paths:
+    - ~/.hermes/skills
+    - ~/homelab/hermes/skills
+
+tools:
+  enabled_toolsets:
+    - terminal

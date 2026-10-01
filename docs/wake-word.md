@@ -1,8 +1,19 @@
-# Wake word (бесплатные аналоги Porcupine)
+# Wake word
 
-Чтобы не нажимать кнопку перед каждой фразой, используется **wake word** — при произнесении ключевой фразы запускается запись и цепочка STT → Moltbot → TTS. Ниже — бесплатные варианты с поддержкой **русского** или возможностью **обучить свою фразу**.
+> Phase 2: Hermes `/wake on` («Hey Hermes», «Привет, Хермес») — [hermes-voice-npu.md](./hermes-voice-npu.md). Legacy: `wakeword_openwakeword.py` (deprecated).
 
-## Сравнение
+## Hermes
+
+- **Hey Hermes:** `hey_hermes` openWakeWord (Ansible default)
+- **Привет, Хермес:** sherpa `phrase: "привет хермес"` or custom wake model
+
+---
+
+## Legacy (openWakeWord + voice_mvp.sh)
+
+Чтобы не нажимать кнопку перед каждой фразой, использовался **wake word** — при произнесении ключевой фразы запускается запись и цепочка STT → Moltbot → TTS.
+
+## Сравнение (legacy)
 
 | Решение | Русский из коробки | Обучить свою фразу | Состояние | Сложность |
 |--------|--------------------|--------------------|-----------|-----------|

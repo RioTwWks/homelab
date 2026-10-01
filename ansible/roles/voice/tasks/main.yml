@@ -1,64 +1,8 @@
 ---
-- name: Clone whisper.cpp
-  ansible.builtin.git:
-    repo: https://github.com/ggerganov/whisper.cpp.git
-    dest: "{{ whisper_cpp_dir }}"
-    version: master
-    depth: 1
+- name: Hermes voice stack (Phases 2+4)
+  ansible.builtin.import_tasks: hermes.yml
+  when: voice_backend == 'hermes'
 
-- name: Configure whisper.cpp build directory
-  ansible.builtin.command:
-    cmd: cmake -B build
-    chdir: "{{ whisper_cpp_dir }}"
-  args:
-    creates: "{{ whisper_cpp_dir }}/build/CMakeCache.txt"
-
-- name: Build whisper.cpp
-  ansible.builtin.command:
-    cmd: cmake --build build -j
-    chdir: "{{ whisper_cpp_dir }}"
-  args:
-    creates: "{{ whisper_cpp_dir }}/build/bin/whisper-server"
-
-- name: Download whisper model
-  ansible.builtin.command:
-    cmd: "./models/download-ggml-model.sh {{ whisper_model_name }}"
-    chdir: "{{ whisper_cpp_dir }}"
-  args:
-    creates: "{{ whisper_cpp_dir }}/models/ggml-{{ whisper_model_name }}.bin"
-
-- name: Create Piper venv
-  ansible.builtin.command:
-    cmd: "python3 -m venv {{ piper_venv }}"
-    creates: "{{ piper_venv }}/bin/python"
-
-- name: Install Piper TTS
-  ansible.builtin.pip:
-    name:
-      - piper-tts
-      - pathvalidate
-    virtualenv: "{{ piper_venv }}"
-    state: present
-  when: tts_engine == 'piper'
-
-- name: Create Silero venv
-  ansible.builtin.command:
-    cmd: "python3 -m venv {{ silero_venv }}"
-    creates: "{{ silero_venv }}/bin/python"
-  when: tts_engine == 'silero'
-
-- name: Install Silero dependencies
-  ansible.builtin.pip:
-    name:
-      - torch
-      - torchaudio
-      - omegaconf
-    virtualenv: "{{ silero_venv }}"
-    state: present
-  when: tts_engine == 'silero'
-
-- name: Render voice_mvp.env
-  ansible.builtin.template:
-    src: voice_mvp.env.j2
-    dest: "{{ moltbot_install_dir }}/scripts/voice_mvp.env"
-    mode: "0644"
+- name: Legacy whisper.cpp voice MVP
+  ansible.builtin.import_tasks: legacy.yml
+  when: voice_backend == 'legacy'

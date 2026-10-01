@@ -68,8 +68,24 @@ nextcloud_trusted_domains: "localhost 127.0.0.1"
 gitlab_external_url: http://localhost:18090
 grafana_admin_password: admin
 
-# Voice (host)
+# Voice (host) — Hermes default (Phase 2); legacy whisper.cpp optional
+voice_backend: hermes
 voice_user: "{{ ansible_user_id | default(lookup('env', 'USER')) }}"
+hermes_home: "{{ ansible_env.HOME }}/.hermes"
+hermes_ollama_base_url: http://127.0.0.1:11434
+hermes_llm_model: qwen3:8b
+hermes_context_length: 65536
+hermes_stt_language: ru
+hermes_faster_whisper_model: base
+hermes_wake_word_en: hey hermes
+hermes_wake_word_ru: "привет хермес"
+hermes_edge_voice: ru-RU-DmitryNeural
+hermes_enable_npu_stt: false
+flm_serve_model: gemma3:1b
+flm_serve_port: 52625
+flm_pmode: powersaver
+moltbot_enable_systemd_flm_asr: false
+
 whisper_cpp_dir: "{{ ansible_env.HOME }}/.local/src/whisper.cpp"
 whisper_model_name: medium
 whisper_server_port: 8099
@@ -80,6 +96,23 @@ silero_venv: "{{ ansible_env.HOME }}/.venvs/silero"
 # Backup timer
 backup_dir: /backup/homelab
 backup_retention_days: 14
+
+# Remote access (docs/remote-access.md) — secrets only in local.yml
+remote_access_install_tailscale_client: false
+remote_access_headscale_login_server: ""
+remote_access_tailscale_authkey: ""
+remote_access_install_cloudflared: false
+remote_access_cloudflare_tunnel_name: homelab
+remote_access_cloudflare_tunnel_id: ""
+remote_access_cloudflare_credentials_path: /etc/cloudflared/credentials.json
+remote_access_cloudflare_config_path: /etc/cloudflared/config.yml
+remote_access_cloudflare_ingress:
+  - hostname: moltbot.example.com
+    service: http://localhost:18079
+  - hostname: api-moltbot.example.com
+    service: http://localhost:18080
+remote_access_tailscale_hostname: homelab
+remote_access_tailscale_accept_routes: true
 
 # Apt packages for common role
 homelab_apt_packages:

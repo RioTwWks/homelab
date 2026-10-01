@@ -22,7 +22,8 @@ make install        # deps + docker compose + health check
 
 ```bash
 make install-minimal   # ui
-make install-voice     # ui + search + voice + whisper systemd
+make install-voice
+make install-voice-npu
 make install-full      # все профили + backup timer
 ```
 
@@ -36,6 +37,7 @@ ansible/
   group_vars/local.yml            # ваш конфиг (не в git)
   playbooks/site.yml              # полный deploy
   playbooks/voice.yml             # только голос
+  playbooks/remote_access.yml     # Headscale-клиент, cloudflared
   roles/
     common/                       # apt, Docker
     ollama/                       # Ollama + модели
@@ -58,6 +60,7 @@ scripts/configure-wizard.sh       # интерактивный выбор
 | `make up` / `make down` | Быстрый docker compose без Ansible |
 | `make health` | `curl /healthz` |
 | `make backup-timer` | Включить ежедневный бэкап |
+| `make remote-access` | Клиент Headscale / cloudflared (`docs/remote-access.md`) |
 | `make check` | `ansible-playbook --syntax-check` |
 
 ## Профили Docker Compose

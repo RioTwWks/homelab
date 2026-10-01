@@ -12,6 +12,7 @@
 | `moltbot_ui/` | Статический веб-UI (nginx, профиль `ui`) |
 | `scripts/` | Host: голос, backup, media executor, timer worker, systemd |
 | `docs/` | Операционная документация |
+| `hermes/` | Hermes Agent: skills + CLI (миграция с moltbot-api, фаза 1+) |
 | `docker-compose.yml` | Основной стек |
 | `docker-compose.raid*.example.yml` | **Override**, не standalone |
 | `.cursor/rules/` | Cursor project rules (`.mdc`) |
@@ -44,7 +45,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 ```
 
 - **Ollama на хосте**, не в Docker. Контейнер ходит на `host.docker.internal:11434`.
-- **Профили** (`ha`, `ui`, `storage`, `photos`, `torrents`, `gitlab`, `search`) не стартуют без `--profile`.
+- **Профили** (`ha`, `ui`, `storage`, `photos`, `torrents`, `gitlab`, `monitoring`, `search`) не стартуют без `--profile`.
 - **Media:** нужен `MEDIA_EXECUTOR_URL` + скрипт на хосте (`scripts/media_executor_example.py`).
 - **Таймеры:** API пишет в Redis, на хосте нужен `scripts/timer_worker.py`.
 - **SearXNG из контейнера:** `SEARXNG_BASE_URL=http://searxng:8080`, не `localhost`.
@@ -57,6 +58,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | 18079 | moltbot-ui (profile `ui`) |
 | 8090 | media-api |
 | 8091 | media executor (host) |
+| 8092 | homelab mode executor (host) |
 | 11434 | Ollama (host) |
 | 8123 | Home Assistant (profile `ha`) |
 
@@ -73,13 +75,22 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 
 | Документ | Тема |
 |----------|------|
-| `docs/voice-mvp.md` | Push-to-talk, Whisper, TTS |
+| `docs/voice-mvp.md` | Hermes voice + legacy push-to-talk |
+| `docs/hermes-voice-npu.md` | FastFlowLM NPU STT, `flm validate` |
+| `docs/wake-word.md` | Hermes wake word + legacy openWakeWord |
 | `docs/media-control.md` | media-api, executor, Kodi |
 | `docs/home-assistant.md` | HA, голосовые команды |
 | `docs/web-search.md` | SearXNG, WEB_SEARCH_PROVIDER |
 | `docs/timers.md` | Таймеры, timer_worker |
 | `docs/storage-raid.md` | RAID override-файлы |
 | `docs/backup.md` | backup.sh, systemd timer |
+| `docs/hermes-phase1-runbook.md` | Hermes: установка, config ≥64K, skills |
+| `docs/rag-qdrant.md` | Qdrant RAG ingest, Hermes integration |
+| `docs/homelab-modes.md` | AI / Gaming / Media, executor, Steam/Proton |
+| `docs/opencode.md` | OpenCode + Ollama (кодинг, `~/.config/opencode`) |
+| `docs/monitoring.md` | Prometheus, Grafana, all-smi |
+| `docs/remote-access.md` | AmneziaWG, Headscale, Cloudflare Tunnel |
+| `docs/jev-hooks.md` | Jev PreToolUse gate, quality logging (фаза 3) |
 
 ## Подсказки для изменений
 

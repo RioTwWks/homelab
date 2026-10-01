@@ -57,13 +57,24 @@
           <div id="sessionList" class="session-list"></div>
           <button id="newSession" class="btn-new-session">+ новая сессия</button>
           <label class="field" style="margin-top:8px">
-            <div class="field-label">mode</div>
+            <div class="field-label">Режим чата</div>
             <select id="mode" class="input">
               <option value="auto" selected>auto</option>
               <option value="fast">fast</option>
               <option value="chat">chat</option>
             </select>
           </label>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-icon">🎛</span><div class="card-title">Режим системы</div></div>
+          <p class="homelab-mode-hint">AI · Gaming · Media</p>
+          <div class="homelab-mode-switch" role="group" aria-label="Режим homelab">
+            <button type="button" class="homelab-mode-btn" data-homelab-mode="ai">🧠 AI</button>
+            <button type="button" class="homelab-mode-btn" data-homelab-mode="gaming">🎮 Gaming</button>
+            <button type="button" class="homelab-mode-btn" data-homelab-mode="media">🎬 Media</button>
+          </div>
+          <div id="homelabModeStatus" class="homelab-mode-status">Загрузка…</div>
         </div>
 
         <!-- Quick commands -->

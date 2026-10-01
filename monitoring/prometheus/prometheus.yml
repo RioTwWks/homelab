@@ -1,0 +1,48 @@
+# Homelab monitoring — scrape targets for profile `monitoring`.
+# Reload: docker compose --profile monitoring exec prometheus kill -HUP 1
+# or POST http://localhost:19090/-/reload (web.enable-lifecycle)
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://host.docker.internal:11434/api/tags
+          - http://host.docker.internal:18080/healthz
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+      - source_labels: [__param_target]
+        regex: ".*/api/tags"
+        target_label: service
+        replacement: ollama
+      - source_labels: [__param_target]
+        regex: ".*/healthz"
+        target_label: service
+        replacement: moltbot-api
+
+  # all-smi API on the host (install + systemd: docs/monitoring.md).
+  # Default port 19095 avoids conflict with GitLab embedded Prometheus (9090).
+  - job_name: all-smi
+    metrics_path: /metrics
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["host.docker.internal:19095"]
