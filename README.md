@@ -156,7 +156,9 @@ docker compose --profile photos up -d
 docker compose --profile gitlab up -d
 ```
 
-По умолчанию: веб `http://localhost:18090`, SSH порт 2222, Registry порт 5005, Grafana `http://localhost:18091`. В `.env` можно задать `GITLAB_EXTERNAL_URL`, `GITLAB_HTTP_PORT` и др.
+По умолчанию: веб `http://localhost:18090`, SSH порт 2222, Registry порт 5005. В `.env` можно задать `GITLAB_EXTERNAL_URL`, `GITLAB_HTTP_PORT` и др.
+
+Grafana и Prometheus — профиль **`monitoring`** (не `gitlab`): `docker compose --profile monitoring up -d`, дашборды и all-smi — `docs/monitoring.md`.
 
 Вместе с профилем поднимается **GitLab Runner** (конфиг в `gitlab-runner-config/config.toml`; пример — `config.toml.example`). Перенос существующего GitLab и Runner из другой директории: `docs/gitlab-migration.md`.
 
