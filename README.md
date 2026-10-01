@@ -178,4 +178,5 @@ docker compose --profile gitlab up -d
 - Торренты (фильмы/сериалы/музыка из загрузок): qBittorrent (профиль `torrents`), папка загрузок — источник в Kodi; голос: «открой торренты». `docs/torrents.md`.
 - Черновики статей (Habr, Telegram): `docs/drafts/`.
 - Резервное копирование всей системы (как RAID для файлов/фото): вся система на RAID — `docker-compose.raid-full.example.yml` (см. `docs/storage-raid.md`); автоматический бэкап по расписанию — `scripts/backup.sh` + systemd timer в `scripts/systemd/`. Подробно: `docs/backup.md`.
+- Кодинг-ассистент OpenCode + Ollama (`qwen3-coder:30b`, контекст ≥64K): `docs/opencode.md`, пример конфига — `config/opencode/opencode.json`.
 
