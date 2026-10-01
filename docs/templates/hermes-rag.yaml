@@ -1,0 +1,28 @@
+# Hermes + Qdrant — шаблон (фаза 6)
+# docs/rag-qdrant.md | ./scripts/rag/ingest.sh
+
+model:
+  provider: ollama
+  base_url: http://127.0.0.1:11434
+  model: qwen3:8b
+  context_length: 65536
+
+rag:
+  provider: qdrant
+  url: http://127.0.0.1:6333
+  collection: homelab_knowledge
+
+memory:
+  provider: qdrant
+
+plugins:
+  qdrant:
+    connection:
+      mode: remote
+      url: http://127.0.0.1:6333
+    embedding:
+      provider: fastembed
+      model: BAAI/bge-small-en-v1.5
+    retrieval:
+      mode: hybrid
+      top_k: 8
