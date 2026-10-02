@@ -12,3 +12,12 @@ skills:
 tools:
   enabled_toolsets:
     - terminal
+
+# Optional: after wake → STT, POST audio (+ text) to middleware before Hermes/TTS
+# See docs/hermes-speaker-personalization.md
+voice:
+  middleware:
+    enabled: false
+    url: http://host.docker.internal:8098
+    # On bare metal use http://127.0.0.1:8098
+    process_path: /process_voice

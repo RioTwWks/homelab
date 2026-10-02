@@ -10,6 +10,7 @@ moltbot_profile_presets:
   voice:
     - ui
     - search
+    - voice
   storage:
     - ui
     - storage
@@ -80,6 +81,8 @@ hermes_faster_whisper_model: base
 hermes_wake_word_en: hey hermes
 hermes_wake_word_ru: "привет хермес"
 hermes_edge_voice: ru-RU-DmitryNeural
+hermes_speaker_middleware_enabled: false
+hermes_speaker_middleware_url: http://127.0.0.1:8098
 hermes_enable_npu_stt: false
 flm_serve_model: gemma3:1b
 flm_serve_port: 52625

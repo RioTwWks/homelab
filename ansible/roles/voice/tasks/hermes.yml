@@ -46,3 +46,10 @@
     src: hermes_voice.env.j2
     dest: "{{ moltbot_install_dir }}/scripts/hermes_voice.env"
     mode: "0644"
+
+- name: Install Hermes personality SOUL templates (child / student / adult)
+  ansible.builtin.command:
+    cmd: "{{ moltbot_install_dir }}/scripts/install-hermes-personalities.sh"
+    creates: "{{ hermes_home }}/personalities/adult/SOUL.md"
+  environment:
+    HERMES_HOME: "{{ hermes_home }}"
