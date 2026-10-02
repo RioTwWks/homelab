@@ -21,12 +21,12 @@ fi
 "$API_VENV/bin/python" -m pytest "$ROOT/moltbot_api/tests/test_homelab_mode.py" -q
 
 echo "==> RAG: ingest --dry-run"
-"$ROOT/scripts/rag/ingest.sh" --dry-run >/dev/null
+bash "$ROOT/scripts/rag/ingest.sh" --dry-run >/dev/null
 
 if curl -sf "${QDRANT_URL:-http://localhost:6333}/healthz" >/dev/null 2>&1; then
   echo "==> RAG: fake-embeddings smoke (qdrant reachable)"
-  "$ROOT/scripts/rag/ingest.sh" --fake-embeddings --limit-chunks 5
-  "$ROOT/scripts/rag/search.sh" --fake-embeddings "docker compose" | head -3
+  bash "$ROOT/scripts/rag/ingest.sh" --fake-embeddings --limit-chunks 5
+  bash "$ROOT/scripts/rag/search.sh" --fake-embeddings "docker compose" | head -3
 else
   echo "SKIP: Qdrant not reachable (${QDRANT_URL:-http://localhost:6333}); docker compose up -d qdrant for full RAG smoke"
 fi
