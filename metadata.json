@@ -1,0 +1,8 @@
+{
+  "name": "Moltbot Homelab Voice Hub",
+  "description": "Personal homelab voice assistant and control hub with chat, smart intent routing, homelab system mode switcher, and service dashboard.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
