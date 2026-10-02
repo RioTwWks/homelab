@@ -59,6 +59,8 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | 8090 | media-api |
 | 8091 | media executor (host) |
 | 8092 | homelab mode executor (host) |
+| 8098 | speaker-personality-middleware (profile `voice`) |
+| 8099 | speaker-recognition (profile `voice`; не совмещать с legacy whisper-server на том же порту) |
 | 11434 | Ollama (host) |
 | 8123 | Home Assistant (profile `ha`) |
 
@@ -90,6 +92,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/opencode.md` | OpenCode + Ollama (кодинг, `~/.config/opencode`) |
 | `docs/monitoring.md` | Prometheus, Grafana, all-smi |
 | `docs/runbook-voice-monitoring.md` | B2 runbook: voice/NPU + monitoring validate & host steps |
+| `docs/hermes-speaker-personalization.md` | Speaker ID, middleware :8098, personalities child/student/adult |
 | `docs/remote-access.md` | AmneziaWG, Headscale, Cloudflare Tunnel |
 | `docs/jev-hooks.md` | Jev PreToolUse gate, quality logging (фаза 3) |
 

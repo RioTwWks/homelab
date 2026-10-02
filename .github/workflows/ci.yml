@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: [moltbot_api, media_api]
+        service: [moltbot_api, media_api, services/speaker_personality_middleware]
     defaults:
       run:
         working-directory: ${{ matrix.service }}

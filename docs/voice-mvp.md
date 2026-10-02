@@ -10,7 +10,7 @@ make install-voice-npu   # FastFlowLM NPU STT
 hermes doctor && hermes run "Привет"
 ```
 
-См. [hermes-voice-npu.md](./hermes-voice-npu.md), [wake-word.md](./wake-word.md). Rollback: `voice_backend: legacy`.
+См. [hermes-voice-npu.md](./hermes-voice-npu.md), [wake-word.md](./wake-word.md), [hermes-speaker-personalization.md](./hermes-speaker-personalization.md). Rollback: `voice_backend: legacy`.
 
 ---
 

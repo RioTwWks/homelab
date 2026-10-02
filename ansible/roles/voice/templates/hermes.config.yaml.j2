@@ -52,3 +52,9 @@ npu:
   provider: fastflowlm
   tasks:
     - stt
+
+voice:
+  middleware:
+    enabled: {{ hermes_speaker_middleware_enabled | bool }}
+    url: "{{ hermes_speaker_middleware_url }}"
+    process_path: /process_voice

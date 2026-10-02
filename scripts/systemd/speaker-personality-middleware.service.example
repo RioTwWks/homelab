@@ -1,0 +1,19 @@
+[Unit]
+Description=Homelab speaker personality middleware (FastAPI :8098)
+Documentation=file:%h/homelab/docs/hermes-speaker-personalization.md
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=%h/homelab/services/speaker_personality_middleware
+Environment=SPEAKER_SERVICE_URL=http://127.0.0.1:8099
+Environment=SPEAKER_PERSONALITY_CONFIG=%h/homelab/services/speaker_personality_middleware/config/speaker_personality.yaml
+Environment=CONFIDENCE_THRESHOLD=0.7
+ExecStart=%h/homelab/.venv-speaker-mw/bin/uvicorn app.main:app --host 0.0.0.0 --port 8098
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

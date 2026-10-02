@@ -1,0 +1,14 @@
+# Speaker → Hermes personality mapping (homelab voice)
+# Override via env: SPEAKER_SERVICE_URL, HERMES_URL, PERSONALITY_MAP (JSON), CONFIDENCE_THRESHOLD
+
+speaker_service_url: http://speaker-recognition:8099
+hermes_url: ""
+confidence_threshold: 0.7
+default_personality: adult
+audio_sample_rate: 16000
+
+# Keys must match speaker labels from POST /train (speaker-recognition service)
+personality_map:
+  # child: child
+  # student: student
+  # parent: adult
