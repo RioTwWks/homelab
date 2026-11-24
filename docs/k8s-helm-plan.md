@@ -2,7 +2,7 @@
 
 Статус: **план**. Цель — поэтапная миграция контейнеризированной части homelab с Docker Compose на Kubernetes (K3s) с управлением через Helm, без остановки голосового контура.
 
-Текущая архитектура: `docs/architecture.md`. Установка хоста: `docs/platform.md`, `docs/install.md`.
+Текущая архитектура: `docs/architecture.md`. Установка хоста: `docs/platform.md`, `docs/install.md`. Увязка с Hermes-миграцией: §3.1.
 
 ## 1. Зачем
 
@@ -32,10 +32,10 @@ Docker Compose покрывает запуск сервисов на одном 
 
 | Сервис | Чарт | Namespace | Профиль compose |
 |---|---|---|---|
-| moltbot-api (:18080) | собственный `charts/moltbot` | `moltbot` | базовый |
 | media-api (:8090) | собственный `charts/moltbot` | `moltbot` | базовый |
 | moltbot-ui | собственный `charts/moltbot` | `moltbot` | `ui` |
 | Redis, Qdrant, MQTT | bitnami/qdrant/собственный subchart | `moltbot` | базовый |
+| moltbot-api (:18080) | собственный `charts/moltbot` — **только после acceptance Hermes** (см. §3.1) | `moltbot` | базовый |
 | Home Assistant | community | `home` | `ha` |
 | Nextcloud | community | `storage` | `storage` |
 | Immich | community | `photos` | `photos` |
@@ -49,8 +49,21 @@ Docker Compose покрывает запуск сервисов на одном 
 
 - **Ollama** (`qwen3:4b`/`qwen3:8b`, :11434), **Whisper STT**, **TTS**, **wake word** — GPU (Radeon 890M) и аудиоустройства; проброс в K8s требует device plugin и усложняет отладку.
 - **media executor** (:8091), **Kodi/Stremio/браузер на HDMI**, **timer_worker** — прямой доступ к сессии/железу.
+- **Hermes Agent** (`hermes/`, CLI) — ставится на хост по `docs/hermes-phase1-runbook.md`, работает рядом с Ollama и голосовым контуром; после acceptance может заменить moltbot-api как оркестратор.
 
 Связность «кластер → хост»: вместо `host.docker.internal` — `host.k3s.internal` (K3s ≥ v1.30 резолвит её на хост) либо `ExternalName`/статический IP хоста. Порты хостовых сервисов (11434, 8091) остаются прежними.
+
+Связность «хост → кластер» (Hermes, host-tools): по тем же портам через NodePort/ingress (:18080, :8090); `hermes/tools/*` и skills не меняются — они работают по HTTP.
+
+### 3.1 Увязка с Hermes-миграцией
+
+Параллельно идёт миграция moltbot-api → Hermes (`hermes/MIGRATION.md`, `docs/hermes-phase1-runbook.md`). Правила стыковки двух миграций:
+
+- **Две миграции не смешиваем.** Пока Hermes не прошёл acceptance, moltbot-api — рабочий оркестратор на :18080 и остаётся в compose. Переносить в K8s компонент, который может быть заменён, — лишний риск и двойная работа.
+- **Оркестраторный слой — отдельным шагом.** Фаза 1 переносит только инфраструктуру и вспомогательные сервисы (Redis, Qdrant, MQTT, media-api, moltbot-ui) — они нужны обоим оркестраторам. moltbot-api переносится после acceptance Hermes; если Hermes его заменяет, перенос может вообще не потребоваться.
+- **Чарт параметризует backend**: `assistant.backend: moltbot | hermes` в `values.yaml` — смена оркестратора становится сменой values, а не редизайном чарта.
+- **Hermes остаётся на хосте** и после acceptance: ему нужны Ollama, аудиоконтур и host tools. В кластер он не переносится.
+- **Новая функциональность ассистента** по-прежнему идёт в `hermes/skills` + `hermes/tools` — K8s-миграция это правило не меняет.
 
 ## 4. Структура репозитория (добавляется по фазам)
 
@@ -58,9 +71,9 @@ Docker Compose покрывает запуск сервисов на одном 
 k8s/
   README.md                  # как поднять/обновить кластер
   charts/
-    moltbot/                 # umbrella-чарт: api, media-api, ui, redis, qdrant, mqtt
+    moltbot/                 # umbrella-чарт: redis, qdrant, mqtt, media-api, ui (+ api после §3.1)
       Chart.yaml
-      values.yaml            # порты, образы, ресурсы, env-имена (значения секретов — не здесь)
+      values.yaml            # порты, образы, ресурсы, env-имена, assistant.backend (секреты — не здесь)
       templates/
   values/                    # values для community-чартов (ha.yaml, nextcloud.yaml, ...)
   namespaces/                # namespace-манифесты
@@ -80,13 +93,20 @@ scripts/
 - Снапшот/бэкап по `docs/backup.md` перед любыми изменениями.
 - **Критерий выхода**: `kubectl get nodes` — Ready; compose-стек работает как раньше (`curl -s localhost:18080/healthz`).
 
-### Фаза 1 — ядро moltbot (собственный чарт)
+### Фаза 1 — инфраструктура ядра (собственный чарт, без оркестратора)
 
-- Создать `k8s/charts/moltbot`: Deployment+Service для `moltbot-api`, `media-api`, `moltbot-ui`; Redis, Qdrant, MQTT — subchart/манифесты с PVC (local-path).
+- Создать `k8s/charts/moltbot`: Redis, Qdrant, MQTT (subchart/манифесты с PVC local-path), `media-api`, `moltbot-ui`. **moltbot-api в чарт не включаем** — он остаётся в compose до acceptance Hermes (см. §3.1).
 - Миграция env: `.env` → ConfigMap + Sealed Secrets.
-- Запуск **параллельно** compose (на свободных портах кластера, NodePort), прогон health check и smoke: `/healthz`, `/v1/chat` (диалог, новости, погода — как в README).
-- Переключение: compose down для перенесённых сервисов → порты 18080/8090 отдаёт ingress/NodePort.
-- **Критерий выхода**: голосовой контур работает через K8s-инстанс, `curl -s localhost:18080/healthz` отвечает от пода; откат = `docker compose up -d` (манифесты compose не удаляем).
+- Запуск **параллельно** compose (NodePort на свободных портах), прогон health check и smoke: `/healthz`, `/v1/chat` (диалог, новости, погода — как в README) с moltbot-api из compose, работающим на кластерные Redis/Qdrant/MQTT.
+- Переключение: compose down для перенесённых сервисов → порты отдаёт ingress/NodePort.
+- **Критерий выхода**: голосовой контур работает на кластерной инфраструктуре; откат = `docker compose up -d` (манифесты compose не удаляем).
+
+### Фаза 1.5 — оркестраторный слой (после acceptance Hermes)
+
+- Дождаться acceptance Hermes (`scripts/hermes-validate-tools.sh`, сценарии из runbook'а).
+- Если оркестратором остаётся moltbot-api: добавить его в `charts/moltbot` и перенести по схеме Фазы 1.
+- Если оркестратор — Hermes на хосте: moltbot-api выводится из compose, порт :18080 обслуживает Hermes-совместимый слой; чарт переключается через `assistant.backend: hermes`.
+- **Критерий выхода**: решение зафиксировано в `docs/architecture.md`; `curl -s localhost:18080/healthz` и голосовые сценарии работают на выбранном варианте.
 
 ### Фаза 2 — опциональные профили на community-чартах
 
@@ -109,7 +129,7 @@ scripts/
 
 ### Фаза 5 — решение по host-сервисам и декомиссия compose
 
-- Оценить перенос Ollama/STT/TTS в кластер: AMD GPU device plugin, проброс `/dev/kfd`, `/dev/dri`, аудио. Скорее всего — оставить на хосте (задокументировать решение).
+- Оценить перенос Ollama/STT/TTS в кластер: AMD GPU device plugin, проброс `/dev/kfd`, `/dev/dri`, аудио. Скорее всего — оставить на хосте вместе с Hermes (задокументировать решение).
 - После стабильной работы (≥2 недели без откатов): заархивировать compose-профили, обновить README/`docs/architecture.md`.
 - **Критерий выхода**: `docker-compose.yml` содержит только то, что реально осталось (или помечен legacy).
 
@@ -118,14 +138,16 @@ scripts/
 | Риск | Митигация |
 |---|---|
 | Деградация голосового контура при миграции | Параллельный запуск (Фаза 1), откат = compose up |
+| Смешение Hermes- и K8s-миграций | Оркестратор не переносим до acceptance Hermes (§3.1, Фаза 1.5); инфраструктура общая для обоих |
 | Потеря данных stateful-сервисов | Бэкап перед каждой фазой (`scripts/backup.sh`); PVC с retain |
-| GPU/аудио в K8s | Host-сервисы не переносим до отдельного решения (Фаза 5) |
+| GPU/аудио в K8s | Host-сервисы (включая Hermes) не переносим до отдельного решения (Фаза 5) |
 | Рост сложности для одного узла | Фазы независимы; любую можно не делать — compose остаётся рабочим |
 | Конфликт портов 18080/8090 при параллельном запуске | NodePort на других портах до переключения |
 
 ## 7. Definition of Done (весь план)
 
 - Все контейнерные сервисы управляются Helm-релизами, конфигурация — в Git.
-- `curl -s localhost:18080/healthz` отвечает от K8s-инстанса; голосовые сценарии (диалог, погода, медиа, умный дом) работают.
+- Решение по оркестратору (moltbot-api vs Hermes) зафиксировано; чарт поддерживает выбранный вариант (`assistant.backend`).
+- `curl -s localhost:18080/healthz` отвечает от целевого инстанса; голосовые сценарии (диалог, погода, медиа, умный дом) работают.
 - Секреты — только Sealed Secrets/`.env`; в Git открытых секретов нет.
 - CI валидирует чарты (`k8s-validate.sh`); документация (`k8s/README.md`, `docs/architecture.md`) актуальна.
