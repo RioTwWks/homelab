@@ -26,4 +26,7 @@ echo "==> Makefile: voice / install-voice-npu targets"
 grep -q '^install-voice:' "$ROOT/Makefile"
 grep -q '^install-voice-npu:' "$ROOT/Makefile"
 
+echo "==> hermes.config.yaml.j2: render + contract validation"
+bash "$ROOT/scripts/verify-hermes-config-render.sh"
+
 echo "OK: voice + monitoring runbook checks passed (see also: make check, docs/runbook-voice-monitoring.md)"
