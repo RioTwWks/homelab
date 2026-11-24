@@ -1,0 +1,45 @@
+# Home Assistant — фаза 2 плана docs/k8s-helm-plan.md (пятый сервис, профиль ha).
+# Чарт: home-assistant (pajikos) — https://github.com/pajikos/home-assistant-helm-chart
+#
+# Установка:
+#   helm repo add home-assistant https://pajikos.github.io/home-assistant-helm-chart/
+#   kubectl apply -f k8s/namespaces/   # namespace home
+#   helm install home-assistant home-assistant/home-assistant \
+#     -n home -f k8s/values/home-assistant.yaml
+
+image:
+  repository: ghcr.io/home-assistant/home-assistant # как в compose
+  tag: stable
+
+env:
+  - name: TZ
+    value: Europe/Moscow
+
+# Параллельный запуск: compose держит :8123, кластер — :30123.
+service:
+  type: NodePort
+  port: 8123
+  nodePort: 30123
+
+# Discovery (mDNS/SSDP) работает только в hostNetwork. В параллельной фазе
+# выключен (8123 занят compose на хосте); при переключении:
+#   hostNetwork: true
+#   dnsPolicy: ClusterFirstWithHostNet
+# compose при этом должен отдать порт 8123. См. k8s/README.md, фаза 2.
+hostNetwork: false
+
+# Zigbee/Z-Wave USB-донгл (если есть) — раскомментировать под свое устройство:
+# additionalVolumes:
+#   - name: usb
+#     hostPath:
+#       path: /dev/serial/by-id/usb-...
+#       type: CharDevice
+# additionalMounts:
+#   - name: usb
+#     mountPath: /dev/ttyACM0
+
+persistence:
+  enabled: true
+  storageClass: local-path
+  accessMode: ReadWriteOnce
+  size: 5Gi # под размер docker-тома homeassistant_config
