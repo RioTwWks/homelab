@@ -1,0 +1,107 @@
+# Nextcloud — фаза 2 плана docs/k8s-helm-plan.md (третий сервис).
+# Чарт: официальный nextcloud — https://github.com/nextcloud/helm
+#
+# Установка:
+#   helm repo add nextcloud https://nextcloud.github.io/helm/
+#   kubectl apply -f k8s/namespaces/   # namespace storage
+#   # создать секреты (k8s/README.md), затем:
+#   helm install nextcloud nextcloud/nextcloud -n storage -f k8s/values/nextcloud.yaml
+#
+# Секреты (создаются kubectl'ом, в Git не хранятся; фаза 3 — Sealed Secrets):
+#   nextcloud-admin   — nextcloud-username, nextcloud-password
+#   nextcloud-db      — db-username, db-password (креды приложения к MariaDB)
+#   nextcloud-mariadb — mariadb-root-password, mariadb-replication-password, mariadb-password
+
+image:
+  flavor: apache
+  # ВАЖНО: tag должен совпадать с мажорной версией nextcloud в compose на момент
+  # миграции (Nextcloud не поддерживает пропуск мажорных версий при апгрейде).
+  # Текущая версия: docker compose exec nextcloud occ status
+  # Пример: tag: "31.0.9" (чарт сам допишет суффикс -apache). Пусто = appVersion чарта.
+  tag: ""
+
+nextcloud:
+  host: localhost
+  # как NEXTCLOUD_TRUSTED_DOMAINS в .env + внутрикластерное имя
+  trustedDomains:
+    - localhost
+    - 127.0.0.1
+    - nextcloud.storage.svc.cluster.local
+  existingSecret:
+    enabled: true
+    secretName: nextcloud-admin
+    usernameKey: nextcloud-username
+    passwordKey: nextcloud-password
+  datadir: /var/www/html/data
+  update: 0
+
+internalDatabase:
+  enabled: false
+
+# MariaDB — паритет с compose (mariadb:10.11, standalone).
+mariadb:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/mariadb
+    # tag — оставить по умолчанию сабчарта (линейка 10.11+); compose-флаги ниже.
+  architecture: standalone
+  auth:
+    database: nextcloud
+    username: nextcloud
+    existingSecret: nextcloud-mariadb
+  primary:
+    # как command в compose (transaction isolation, binlog format)
+    extraFlags: "--transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-read-only-compressed=OFF"
+    persistence:
+      enabled: true
+      storageClass: local-path
+      size: 8Gi
+
+# Креды приложения к MariaDB — из заранее созданного Secret (chart их не хранит в values).
+externalDatabase:
+  enabled: false
+  existingSecret:
+    enabled: true
+    secretName: nextcloud-db
+    usernameKey: db-username
+    passwordKey: db-password
+
+# Redis для file locking — как в compose (REDIS_HOST=redis): общий redis ядра
+# (чарт k8s/charts/moltbot, фаза 1). Без пароля, как в compose.
+externalRedis:
+  enabled: true
+  host: moltbot-redis.moltbot.svc
+  port: "6379"
+  password: ""
+
+redis:
+  enabled: false
+  auth:
+    # ВАЖНО: при дефолте (enabled+password="changeme") чарт собирает REDIS_URL
+    # с паролем, хотя сабчарт redis выключен — ломает подключение к externalRedis.
+    enabled: false
+
+service:
+  # Параллельный запуск с compose: веб на :30082 (compose держит :18082).
+  type: NodePort
+  port: 8080
+  nodePort: 30082
+
+persistence:
+  enabled: true
+  storageClass: local-path
+  size: 20Gi # под размер docker-тома nextcloud_data
+
+# Фоновые задачи (cron) — в compose не было (AJAX), здесь включаем sidecar:
+# надёжнее и бесплатно по ресурсам.
+cronjob:
+  enabled: true
+  type: sidecar
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 2Gi

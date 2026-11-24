@@ -126,6 +126,46 @@ curl -s http://localhost:30084/api/v2/app/version
 читать docker-том `qbittorrent_downloads` — его миграция отдельным релизом,
 shared-том см. комментарий в `k8s/values/qbittorrent.yaml`.
 
+### Nextcloud (третий)
+
+Самый рискованный из тройки: stateful + БД + версионность. Перед началом — бэкап
+(`scripts/backup.sh`).
+
+```bash
+kubectl apply -f k8s/namespaces/   # namespace storage
+
+# 1. Секреты (в Git не хранятся; фаза 3 заменит на Sealed Secrets)
+kubectl -n storage create secret generic nextcloud-admin \
+  --from-literal=nextcloud-username=admin \
+  --from-literal=nextcloud-password='<NEXTCLOUD_ADMIN_PASSWORD из .env>'
+kubectl -n storage create secret generic nextcloud-db \
+  --from-literal=db-username=nextcloud \
+  --from-literal=db-password='<NEXTCLOUD_DB_PASSWORD из .env>'
+kubectl -n storage create secret generic nextcloud-mariadb \
+  --from-literal=mariadb-root-password='<NEXTCLOUD_DB_ROOT_PASSWORD из .env>' \
+  --from-literal=mariadb-replication-password='<случайный>' \
+  --from-literal=mariadb-password='<NEXTCLOUD_DB_PASSWORD из .env>'
+
+# 2. Версия: выставить image.tag в k8s/values/nextcloud.yaml под версию из compose
+#    (Nextcloud не умеет пропускать мажорные версии при апгрейде данных!)
+docker compose exec nextcloud occ status
+
+# 3. Миграция данных
+docker compose stop nextcloud nextcloud_db
+#    - том nextcloud_data → rsync на local-path PV (как в qBittorrent);
+#    - БД: mysqldump из контейнера nextcloud_db, импорт в под mariadb
+#      (kubectl exec -i nextcloud-mariadb-0 -- mysql ... < dump.sql).
+
+# 4. Установка и smoke
+helm repo add nextcloud https://nextcloud.github.io/helm/
+helm install nextcloud nextcloud/nextcloud -n storage -f k8s/values/nextcloud.yaml
+curl -s -o /dev/null -w '%{http_code}' http://localhost:30082/status.php  # 200 + JSON
+```
+
+Проверить логин админом, файлы на месте, версия совпадает с compose. Затем
+`docker compose rm -s nextcloud nextcloud_db` (тома — не удалять до фазы 5).
+Cron-задачи в кластере выполняет sidecar (в compose их не было).
+
 ## Валидация чартов
 
 ```bash
