@@ -1,0 +1,109 @@
+# GitLab CE + Runner — фаза 2 плана docs/k8s-helm-plan.md (шестой, самый тяжёлый сервис).
+# Чарт: официальный gitlab/gitlab 9.5.4 (appVersion 18.5.4 — ТОЧНО версия из compose:
+# restore бэкапа GitLab возможен только на ту же версию).
+#
+# Установка:
+#   helm repo add gitlab https://charts.gitlab.io/
+#   kubectl apply -f k8s/namespaces/   # namespace gitlab
+#   helm install gitlab gitlab/gitlab --version 9.5.4 \
+#     -n gitlab -f k8s/values/gitlab.yaml --timeout 15m
+#
+# Миграция данных — только через backup/restore (k8s/README.md), не rsync.
+
+global:
+  edition: ce # как в compose (gitlab-ce)
+  hosts:
+    # Параллельная фаза: gitlab.localhost / registry.localhost
+    # (на Linux *.localhost резолвится в 127.0.0.1; иначе — /etc/hosts).
+    domain: localhost
+    https: false
+  # SSH: compose держит 2222 на хосте; NodePort-диапазон 30000+.
+  # Порт попадёт в clone-URL (ssh://git@gitlab.localhost:30222/...).
+  shell:
+    port: 30222
+  ingress:
+    # Явно: helm template без кластера иначе отдаёт снятые с поддержки API
+    # (в живом кластере чарт сам выберет актуальные — пины безопасны для K3s ≥ 1.26).
+    apiVersion: networking.k8s.io/v1
+    configureCertmanager: false
+    tls:
+      enabled: false
+  hpa:
+    apiVersion: autoscaling/v2
+  pdb:
+    apiVersion: policy/v1
+
+# TLS/cert-manager — фаза 3; здесь выключено.
+installCertmanager: false
+certmanager:
+  installCRDs: false
+
+# Внутренний Prometheus GitLab не нужен: мониторинг — фаза 4 (kube-prometheus-stack).
+prometheus:
+  install: false
+
+# Единая точка входа (webservice/workhorse/registry) — как задумано чартом.
+# Параллельная фаза: HTTP на :30090 (compose держит 18090).
+nginx-ingress:
+  enabled: true
+  controller:
+    replicaCount: 1
+    metrics:
+      enabled: false
+    service:
+      type: NodePort
+      nodePorts:
+        http: 30090
+        https: 30443
+
+# Runner входит в umbrella-чарт с kubernetes executor (вместо docker.sock из compose).
+# Регистрацию чарт настраивает сам. Пайплайны с docker build/dind не сработают
+# напрямую — нужен kaniko/buildkit; см. k8s/README.md.
+gitlab-runner:
+  install: true
+  runners:
+    locked: false
+
+# Persistence — local-path; размеры под текущие данные compose.
+postgresql:
+  primary:
+    persistence:
+      storageClass: local-path
+      size: 10Gi
+
+redis:
+  master:
+    persistence:
+      storageClass: local-path
+      size: 5Gi
+
+# Object storage (artifacts/uploads/lfs/packages + registry) — внутренний minio.
+minio:
+  persistence:
+    storageClass: local-path
+    size: 20Gi
+
+# Container registry — включён, как в compose. Хранилище — bucket в minio,
+# отдельный PVC не нужен. Адрес: registry.localhost:30090 (через nginx-ingress).
+registry:
+  enabled: true
+
+gitlab:
+  webservice:
+    minReplicas: 1
+    maxReplicas: 1
+  sidekiq:
+    minReplicas: 1
+    maxReplicas: 1
+  gitaly:
+    persistence:
+      storageClass: local-path
+      size: 50Gi # под размер gitlab_data/repositories
+  gitlab-shell:
+    service:
+      type: NodePort
+      nodePort: 30222
+  # kas (agent server) и toolbox — по умолчанию чарта.
+
+# NB: полный чарт тяжёлый (~6–8 ГБ RAM при минимальных репликах). План §5 фаза 4:
+# headroom ≥8 ГБ для Ollama на хосте — оценить перед install (k8s/README.md).

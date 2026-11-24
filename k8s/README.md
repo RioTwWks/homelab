@@ -225,6 +225,52 @@ curl -s -o /dev/null -w '%{http_code}' http://localhost:30123/  # 200
 `helm upgrade`. moltbot-api ходит в HA по `HOME_ASSISTANT_URL` — после переключения
 это `http://localhost:8123` (hostNetwork) или `http://localhost:30123` до него.
 
+### GitLab + Runner (шестой, самый тяжёлый)
+
+Официальный чарт `gitlab/gitlab` **9.5.4** — appVersion **18.5.4**, точно как
+`gitlab/gitlab-ce:18.5.4-ce.0` в compose. Версия критична: restore бэкапа GitLab
+возможен только на ту же версию. Обновление — отдельной процедурой после миграции.
+
+**Ресурсы:** полный чарт при минимальных репликах — ~6–8 ГБ RAM. Учитывая headroom
+≥8 ГБ для Ollama (план §5, фаза 4), проверить `free -g` перед install; при
+нехватке — не запускать параллельно с compose-профилем gitlab (миграция через
+backup/restore это позволяет).
+
+```bash
+kubectl apply -f k8s/namespaces/   # namespace gitlab
+helm repo add gitlab https://charts.gitlab.io/
+helm install gitlab gitlab/gitlab --version 9.5.4 \
+  -n gitlab -f k8s/values/gitlab.yaml --timeout 15m
+
+# Smoke (параллельная фаза)
+curl -s -o /dev/null -w '%{http_code}' http://gitlab.localhost:30090/users/sign_in  # 200
+```
+
+**Миграция — только backup/restore, не rsync** (реляционные данные + репозитории
+согласованы только в бэкапе):
+
+```bash
+# 1. Бэкап в compose
+docker exec gitlab gitlab-backup create STRATEGY=copy
+
+# 2. Копия бэкапа в под toolbox и restore (той же версии!)
+kubectl -n gitlab cp <host_backup.tar> gitlab/$(kubectl -n gitlab get pod -l app=toolbox -o name | cut -d/ -f2):/tmp/
+kubectl -n gitlab exec deploy/gitlab-toolbox -- backup-utility --restore /tmp/<backup.tar>
+#    + восстановить секреты из /etc/gitlab/gitlab-secrets.json (см. docs GitLab)
+```
+
+**Runner:** чарт ставит gitlab-runner с **kubernetes executor** (каждая задача —
+под). В compose был docker executor через docker.sock: пайплайны с `docker build`/
+dind напрямую не заработают — переводить на kaniko/buildkit или оставить такие
+задачи на host-runner (профиль gitlab в compose до фазы 5). Регистрацию runner'а
+чарт выполняет сам.
+
+**Переключение портов:** параллельная фаза — web `gitlab.localhost:30090`,
+registry `registry.localhost:30090`, ssh `:30222`. Финальные порты/домены
+(18090/2222/5005 или единый ingress) — решение фазы 3; clone-URL изменятся,
+предупредить в README проекта. Внутренний Prometheus GitLab выключен —
+мониторинг придёт в фазе 4.
+
 ## Валидация чартов
 
 ```bash
