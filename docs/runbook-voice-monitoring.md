@@ -15,6 +15,7 @@
 | Compose профиль `monitoring` | `docker compose --profile monitoring config --quiet` |
 | YAML/JSON в `monitoring/` | входит в `make check` (см. ниже) |
 | Синтаксис `flm_validate.sh` | `bash -n scripts/flm_validate.sh` |
+| Рендер `hermes.config.yaml.j2` (обе ветки NPU) | `bash scripts/verify-hermes-config-render.sh` |
 
 Одной командой (как в CI после правок):
 
@@ -22,6 +23,7 @@
 make check
 docker compose --profile monitoring config --quiet
 bash -n scripts/flm_validate.sh
+bash scripts/verify-hermes-config-render.sh
 ```
 
 **Важно:** `ansible-playbook --syntax-check ansible/playbooks/voice.yml` из корня репозитория **не** находит роли — в Makefile задан `ANSIBLE_CONFIG=ansible/ansible.cfg`. Используйте `make check` или:
