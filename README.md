@@ -182,4 +182,4 @@ Grafana и Prometheus — профиль **`monitoring`** (не `gitlab`): `dock
 - Резервное копирование всей системы (как RAID для файлов/фото): вся система на RAID — `docker-compose.raid-full.example.yml` (см. `docs/storage-raid.md`); автоматический бэкап по расписанию — `scripts/backup.sh` + systemd timer в `scripts/systemd/`. Подробно: `docs/backup.md`.
 - Кодинг-ассистент OpenCode + Ollama (`qwen3-coder:30b`, контекст ≥64K): `docs/opencode.md`, пример конфига — `config/opencode/opencode.json`.
 - Удалённый доступ (AmneziaWG, Headscale, Cloudflare Tunnel): `docs/remote-access.md`, Ansible: `make remote-access`.
-
+- Kubernetes + Helm: план внедрения K3s и поэтапной миграции с Docker Compose — `docs/k8s-helm-plan.md`.
