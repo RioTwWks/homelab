@@ -12,6 +12,7 @@
 | `moltbot_ui/` | Статический веб-UI (nginx, профиль `ui`) |
 | `scripts/` | Host: голос, backup, media executor, timer worker, systemd |
 | `docs/` | Операционная документация |
+| `k8s/` | K3s + Helm: чарт ядра `charts/moltbot`, namespaces (миграция по `docs/k8s-helm-plan.md`) |
 | `hermes/` | Hermes Agent: skills + CLI (миграция с moltbot-api, фаза 1+) |
 | `docker-compose.yml` | Основной стек |
 | `docker-compose.raid*.example.yml` | **Override**, не standalone |
@@ -95,6 +96,7 @@ Docker: moltbot-api:18080, media-api:8090, redis, qdrant, mqtt + optional profil
 | `docs/hermes-speaker-personalization.md` | Speaker ID, middleware :8098, personalities child/student/adult |
 | `docs/remote-access.md` | AmneziaWG, Headscale, Cloudflare Tunnel |
 | `docs/jev-hooks.md` | Jev PreToolUse gate, quality logging (фаза 3) |
+| `docs/k8s-helm-plan.md` | Миграция на K3s + Helm; `k8s/`, `scripts/k8s-*.sh` |
 
 ## Подсказки для изменений
 

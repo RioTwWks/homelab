@@ -1,0 +1,9 @@
+apiVersion: v2
+name: moltbot
+description: >-
+  Umbrella-чарт ядра homelab: Redis, Qdrant, MQTT, media-api, moltbot-ui.
+  moltbot-api (оркестратор) НЕ входит в чарт до acceptance Hermes —
+  см. docs/k8s-helm-plan.md §3.1.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -1,0 +1,119 @@
+# Ядро homelab: Redis, Qdrant, MQTT, media-api, moltbot-ui.
+# Секреты здесь НЕ храним — только .env / Sealed Secrets (план §4).
+
+# Оркестратор на :18080 (план §3.1): пока moltbot-api на хосте (compose),
+# после acceptance Hermes переключается значением, а не редизайном чарта.
+assistant:
+  backend: moltbot # moltbot | hermes
+
+# По умолчанию все сервисы NodePort — параллельный запуск с compose (план §5, фаза 1):
+# compose-порты 6379/6333/1883/8090/18079 остаются за compose, кластер слушает 30xxx.
+# Кластер → хост: host.k3s.internal (требуется K3s ≥ v1.30), иначе — статический IP хоста.
+
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: 7-alpine
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    port: 6379
+    nodePort: 30379
+  persistence:
+    enabled: true
+    storageClass: local-path
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+qdrant:
+  enabled: true
+  image:
+    repository: qdrant/qdrant
+    tag: v1.13.5
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    port: 6333
+    nodePort: 30333
+    grpcPort: 6334
+    grpcNodePort: 30334
+  persistence:
+    enabled: true
+    storageClass: local-path
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+
+mqtt:
+  enabled: true
+  image:
+    repository: eclipse-mosquitto
+    tag: "2"
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    port: 1883
+    nodePort: 30183
+  persistence:
+    enabled: true
+    storageClass: local-path
+    size: 256Mi
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+mediaApi:
+  enabled: true
+  # Образ собирается из media_api/ и импортируется в k3s (см. k8s/README.md).
+  image:
+    repository: homelab/media-api
+    tag: latest
+    pullPolicy: IfNotPresent
+  env:
+    TZ: Europe/Moscow
+    # media executor остаётся на хосте (:8091) — план §3.
+    MEDIA_EXECUTOR_URL: http://host.k3s.internal:8091
+  service:
+    type: NodePort
+    port: 8090
+    nodePort: 30090
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+ui:
+  enabled: true
+  # Образ собирается из moltbot_ui/ и импортируется в k3s (см. k8s/README.md).
+  image:
+    repository: homelab/moltbot-ui
+    tag: latest
+    pullPolicy: IfNotPresent
+  # Куда nginx проксирует /api: в фазе 1 — moltbot-api на хосте (compose, :18080),
+  # после фазы 1.5 — http://moltbot-moltbot-api:8080 или Hermes-слой (assistant.backend).
+  apiUpstream: http://host.k3s.internal:18080
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 30079
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      memory: 64Mi

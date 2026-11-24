@@ -1,0 +1,85 @@
+{{- if .Values.mqtt.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "moltbot.fullname" . }}-mqtt
+  labels:
+    {{- include "moltbot.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-mqtt
+    app.kubernetes.io/component: mqtt
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ .Values.mqtt.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.mqtt.persistence.size }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "moltbot.fullname" . }}-mqtt
+  labels:
+    {{- include "moltbot.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-mqtt
+    app.kubernetes.io/component: mqtt
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-mqtt
+  template:
+    metadata:
+      labels:
+        {{- include "moltbot.labels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-mqtt
+        app.kubernetes.io/component: mqtt
+    spec:
+      containers:
+        - name: mosquitto
+          image: "{{ .Values.mqtt.image.repository }}:{{ .Values.mqtt.image.tag }}"
+          imagePullPolicy: {{ .Values.mqtt.image.pullPolicy }}
+          ports:
+            - name: mqtt
+              containerPort: 1883
+          readinessProbe:
+            tcpSocket:
+              port: mqtt
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: mqtt
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.mqtt.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /mosquitto/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "moltbot.fullname" . }}-mqtt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "moltbot.fullname" . }}-mqtt
+  labels:
+    {{- include "moltbot.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-mqtt
+    app.kubernetes.io/component: mqtt
+spec:
+  type: {{ .Values.mqtt.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-mqtt
+  ports:
+    - name: mqtt
+      port: {{ .Values.mqtt.service.port }}
+      targetPort: mqtt
+      {{- if eq .Values.mqtt.service.type "NodePort" }}
+      nodePort: {{ .Values.mqtt.service.nodePort }}
+      {{- end }}
+{{- end }}

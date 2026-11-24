@@ -1,0 +1,95 @@
+{{- if .Values.qdrant.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "moltbot.fullname" . }}-qdrant
+  labels:
+    {{- include "moltbot.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-qdrant
+    app.kubernetes.io/component: qdrant
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ .Values.qdrant.persistence.storageClass }}
+  resources:
+    requests:
+      storage: {{ .Values.qdrant.persistence.size }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "moltbot.fullname" . }}-qdrant
+  labels:
+    {{- include "moltbot.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-qdrant
+    app.kubernetes.io/component: qdrant
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-qdrant
+  template:
+    metadata:
+      labels:
+        {{- include "moltbot.labels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-qdrant
+        app.kubernetes.io/component: qdrant
+    spec:
+      containers:
+        - name: qdrant
+          image: "{{ .Values.qdrant.image.repository }}:{{ .Values.qdrant.image.tag }}"
+          imagePullPolicy: {{ .Values.qdrant.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 6333
+            - name: grpc
+              containerPort: 6334
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.qdrant.resources | nindent 12 }}
+          volumeMounts:
+            - name: storage
+              mountPath: /qdrant/storage
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ include "moltbot.fullname" . }}-qdrant
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "moltbot.fullname" . }}-qdrant
+  labels:
+    {{- include "moltbot.labels" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-qdrant
+    app.kubernetes.io/component: qdrant
+spec:
+  type: {{ .Values.qdrant.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "moltbot.fullname" . }}-qdrant
+  ports:
+    - name: http
+      port: {{ .Values.qdrant.service.port }}
+      targetPort: http
+      {{- if eq .Values.qdrant.service.type "NodePort" }}
+      nodePort: {{ .Values.qdrant.service.nodePort }}
+      {{- end }}
+    - name: grpc
+      port: {{ .Values.qdrant.service.grpcPort }}
+      targetPort: grpc
+      {{- if eq .Values.qdrant.service.type "NodePort" }}
+      nodePort: {{ .Values.qdrant.service.grpcNodePort }}
+      {{- end }}
+{{- end }}
