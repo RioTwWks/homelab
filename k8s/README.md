@@ -200,6 +200,31 @@ stateless, в кластере её заменяет valkey с emptyDir, миг�
 После проверки веб-UI и мобильного приложения — `docker compose rm -s` для
 сервисов профиля photos (тома не удалять до фазы 5).
 
+### Home Assistant (пятый)
+
+Чарт [pajikos/home-assistant-helm-chart](https://github.com/pajikos/home-assistant-helm-chart)
+(автообновляемый, образ тот же `home-assistant:stable`). Секретов нет.
+
+```bash
+kubectl apply -f k8s/namespaces/   # namespace home
+helm repo add home-assistant https://pajikos.github.io/home-assistant-helm-chart/
+helm install home-assistant home-assistant/home-assistant \
+  -n home -f k8s/values/home-assistant.yaml
+
+# Smoke
+curl -s -o /dev/null -w '%{http_code}' http://localhost:30123/  # 200
+```
+
+Миграция: `docker compose stop homeassistant`, том `homeassistant_config` → rsync
+на PV пода (`/config`). Проверить, что интеграции/устройства на месте.
+
+**Discovery (mDNS/SSDP)** — единственный функциональный нюанс: работает только
+в `hostNetwork`. В параллельной фазе он выключен (порт 8123 занят compose).
+При переключении: выставить в values `hostNetwork: true` +
+`dnsPolicy: ClusterFirstWithHostNet`, освободить порт (`docker compose stop homeassistant`),
+`helm upgrade`. moltbot-api ходит в HA по `HOME_ASSISTANT_URL` — после переключения
+это `http://localhost:8123` (hostNetwork) или `http://localhost:30123` до него.
+
 ## Валидация чартов
 
 ```bash
