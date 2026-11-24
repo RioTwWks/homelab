@@ -1,0 +1,72 @@
+# qBittorrent — фаза 2 плана docs/k8s-helm-plan.md (второй сервис).
+# Чарт: app-template (bjw-s) — https://github.com/bjw-s-labs/helm-charts
+#
+# Установка:
+#   helm install qbittorrent oci://ghcr.io/bjw-s-labs/helm-charts/app-template \
+#     --version 5.3.0 -n media -f k8s/values/qbittorrent.yaml
+#
+# Миграция данных (перед install): содержимое docker-томов qbittorrent_config и
+# qbittorrent_downloads — на PVC ниже (см. k8s/README.md, фаза 2).
+
+controllers:
+  main:
+    # RWO-тома — пересоздаём под вместо rolling update.
+    strategy: Recreate
+    containers:
+      main:
+        image:
+          repository: lscr.io/linuxserver/qbittorrent # как в compose
+          tag: latest
+        env:
+          TZ: Europe/Moscow
+          PUID: "1000"
+          PGID: "1000"
+          WEBUI_PORT: "8080"
+        probes:
+          liveness:
+            enabled: true
+          readiness:
+            enabled: true
+          startup:
+            enabled: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+
+service:
+  main:
+    controller: main
+    # Параллельный запуск с compose: веб-UI на :30084 (compose держит :18084).
+    type: NodePort
+    ports:
+      http:
+        port: 8080
+        nodePort: 30084
+      # Входящие торрент-соединения (6881 tcp/udp) в compose не проброшены —
+      # паритет сохранён; для сидирования добавить порты сюда и в конфиг qBittorrent.
+
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    storageClass: local-path
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: true
+    globalMounts:
+      - path: /config
+  downloads:
+    enabled: true
+    type: persistentVolumeClaim
+    storageClass: local-path
+    accessMode: ReadWriteOnce
+    size: 100Gi # под размер текущего тома qbittorrent_downloads
+    retain: true
+    globalMounts:
+      - path: /downloads
+    # NB: в compose этот том shared с TorrServer (ro). local-path — RWO:
+    # при миграции TorrServer в кластер перейти на hostPath/RAID (docs/storage-raid.md)
+    # или переносить оба сервиса одним релизом.

@@ -12,7 +12,7 @@
 | `moltbot_ui/` | Статический веб-UI (nginx, профиль `ui`) |
 | `scripts/` | Host: голос, backup, media executor, timer worker, systemd |
 | `docs/` | Операционная документация |
-| `k8s/` | K3s + Helm: чарт ядра `charts/moltbot`, namespaces (миграция по `docs/k8s-helm-plan.md`) |
+| `k8s/` | K3s + Helm: чарт ядра `charts/moltbot`, values community-чартов, namespaces (миграция по `docs/k8s-helm-plan.md`) |
 | `hermes/` | Hermes Agent: skills + CLI (миграция с moltbot-api, фаза 1+) |
 | `docker-compose.yml` | Основной стек |
 | `docker-compose.raid*.example.yml` | **Override**, не standalone |

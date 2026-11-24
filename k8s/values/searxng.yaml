@@ -1,0 +1,58 @@
+# SearXNG — фаза 2 плана docs/k8s-helm-plan.md (первый сервис, минимальный риск).
+# Чарт: searxng (techpipe-io) — https://github.com/techpipe-io/searxng-helm-chart
+#
+# Установка:
+#   helm repo add searxng https://techpipe-io.github.io/searxng-helm-chart
+#   kubectl apply -f k8s/namespaces/
+#   helm install searxng searxng/searxng -n search -f k8s/values/searxng.yaml
+
+image:
+  tag: latest # как в compose (searxng/searxng:latest)
+
+# Параллельный запуск с compose: NodePort выделяется автоматически
+# (чарт не поддерживает фиксированный nodePort) — смотреть: kubectl -n search get svc
+service:
+  type: NodePort
+  port: 8080
+
+# Паритет с searxng/settings.yml (compose-профиль search).
+# JSON API обязателен для moltbot-api (WEB_SEARCH_PROVIDER=searxng): без formats: json — 403.
+config:
+  useDefaultSettings: true
+  settings:
+    general:
+      instance_name: homelab-searxng
+    server:
+      base_url: http://localhost:18081/ # как SEARXNG_PUBLIC_URL в .env
+      limiter: false
+      method: GET
+    search:
+      formats:
+        - html
+        - json
+    engines:
+      - name: radio browser
+        disabled: true
+      - name: ahmia
+        disabled: true
+      - name: torch
+        disabled: true
+
+# SEARXNG_SECRET: чарт генерирует один раз и хранит в Secret релиза (lookup) — в Git секрета нет.
+
+# Limiter выключен (как в compose) — Valkey не нужен.
+valkey:
+  enabled: false
+
+persistence:
+  cache:
+    enabled: true
+    storageClass: local-path
+    size: 1Gi
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    memory: 512Mi

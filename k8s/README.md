@@ -77,6 +77,55 @@ stop redis qdrant mqtt media-api moltbot-ui`, порты освобождают�
   UI → moltbot-api (:18080, пока он в compose).
 - Хост → кластер: NodePort-порты 30xxx (Hermes, host tools, smoke).
 
+## Фаза 2 — опциональные профили (community-чарты)
+
+По одному сервису на релиз, в порядке роста риска (план §5). Для каждого:
+values в `k8s/values/<service>.yaml`, параллельный запуск, проверка,
+выключение compose-профиля. Данные stateful-сервисов мигрируют на PVC
+(или hostPath по `docs/storage-raid.md`), бэкап — перед каждым сервисом.
+
+### SearXNG (первый)
+
+```bash
+helm repo add searxng https://techpipe-io.github.io/searxng-helm-chart
+kubectl apply -f k8s/namespaces/
+helm install searxng searxng/searxng -n search -f k8s/values/searxng.yaml
+
+# Smoke (NodePort выделяется автоматически)
+kubectl -n search get svc searxng
+curl -s "http://localhost:<nodePort>/search?q=test&format=json" | jq '.results | length'
+```
+
+Переключение: в `.env` moltbot-api `WEB_SEARCH_PROVIDER=searxng`,
+`SEARXNG_BASE_URL=http://localhost:<nodePort>` (пока moltbot-api на хосте),
+smoke «новости»/веб-поиск по README, затем `docker compose stop searxng`.
+Когда moltbot-api переедет в кластер — `http://searxng.search.svc:8080`.
+Данных, кроме кэша, нет — миграция данных не требуется.
+
+### qBittorrent (второй)
+
+```bash
+kubectl apply -f k8s/namespaces/   # namespace media
+
+# 1. Миграция данных: остановить compose-сервис, скопировать тома на будущие PV.
+#    local-path кладёт данные в /var/lib/rancher/k3s/storage — после install
+#    найти каталоги PVC (kubectl -n media get pvc → pv → local path) и rsync'нуть
+#    содержимое docker-томов qbittorrent_config и qbittorrent_downloads.
+docker compose stop qbittorrent
+
+# 2. Установка
+helm install qbittorrent oci://ghcr.io/bjw-s-labs/helm-charts/app-template \
+  --version 5.3.0 -n media -f k8s/values/qbittorrent.yaml
+
+# 3. Smoke: веб-UI и API версии
+curl -s http://localhost:30084/api/v2/app/version
+```
+
+Проверить очередь загрузок/раздач на месте, затем `docker compose rm -s qbittorrent`
+(тома не удалять до конца фазы 5 — путь отката). TorrServer в compose продолжает
+читать docker-том `qbittorrent_downloads` — его миграция отдельным релизом,
+shared-том см. комментарий в `k8s/values/qbittorrent.yaml`.
+
 ## Валидация чартов
 
 ```bash

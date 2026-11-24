@@ -95,6 +95,22 @@ jobs:
       - name: Validate compose files
         run: bash scripts/verify/compose-config.sh
 
+  k8s-charts:
+    name: K8s charts validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sfL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz kubeconform
+          sudo install kubeconform /usr/local/bin/
+
+      - name: Validate charts and manifests
+        run: bash scripts/k8s-validate.sh
+
   homelab-runbook-voice-monitoring:
     name: Voice / NPU + monitoring runbook (offline)
     runs-on: ubuntu-latest
