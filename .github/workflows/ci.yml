@@ -113,6 +113,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: moltbot_api/requirements.txt
+
       - name: Verify runbook (RAG dry-run, homelab modes)
         run: bash scripts/verify-runbook-rag-modes.sh
 
