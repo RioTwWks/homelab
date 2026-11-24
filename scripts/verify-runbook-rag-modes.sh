@@ -13,12 +13,24 @@ bash -n "$ROOT/scripts/homelab_mode.sh"
 
 echo "==> moltbot_api: test_homelab_mode.py"
 API_VENV="${MOLTBOT_API_VENV:-$ROOT/moltbot_api/.venv}"
-if [[ ! -x "$API_VENV/bin/python" ]]; then
-  python3 -m venv "$API_VENV"
-  "$API_VENV/bin/pip" install -q -U pip
-  "$API_VENV/bin/pip" install -q -r "$ROOT/moltbot_api/requirements.txt" -r "$ROOT/moltbot_api/requirements-dev.txt"
+API_PY=""
+if [[ -x "$API_VENV/bin/python" ]]; then
+  API_PY="$API_VENV/bin/python"
 fi
-"$API_VENV/bin/python" -m pytest "$ROOT/moltbot_api/tests/test_homelab_mode.py" -q
+if [[ -z "$API_PY" ]]; then
+  # GitHub Actions can fail to symlink python into a venv, leaving a
+  # non-executable bin/python — recreate with --copies, like ensure_venv.sh.
+  [[ -d "$API_VENV" ]] && rm -rf "$API_VENV"
+  python3 -m venv "$API_VENV" --copies
+  if [[ -x "$API_VENV/bin/python" ]]; then
+    API_PY="$API_VENV/bin/python"
+  else
+    API_PY="$(command -v python3)"
+  fi
+  "$API_PY" -m pip install -q -U pip
+  "$API_PY" -m pip install -q -r "$ROOT/moltbot_api/requirements.txt" -r "$ROOT/moltbot_api/requirements-dev.txt"
+fi
+"$API_PY" -m pytest "$ROOT/moltbot_api/tests/test_homelab_mode.py" -q
 
 echo "==> RAG: ingest --dry-run"
 bash "$ROOT/scripts/rag/ingest.sh" --dry-run >/dev/null
