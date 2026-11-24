@@ -141,11 +141,15 @@ celerybeat.pid
 .env
 .envrc
 .venv
+.venv-rag/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Host run artifacts
+nohup.out
 
 # Spyder project settings
 .spyderproject
