@@ -25,8 +25,8 @@ _MONTHS_RU_GEN = [
 ]
 
 
-_CITY_RE = re.compile(r"(?:в|во)\s+([а-яА-ЯёЁ\\-\\s]+?)(?:\\?|\\.|!|$)")
-_HOURS_RE = re.compile(r"через\\s+(\\d{1,2})\\s*час")
+_CITY_RE = re.compile(r"(?:в|во)\s+([а-яА-ЯёЁ\-\s]+?)(?:\?|\.|!|$)")
+_HOURS_RE = re.compile(r"через\s+(\d{1,2})\s*час")
 _CITY_STOPWORDS = {
     "сейчас",
     "сегодня",
@@ -56,10 +56,22 @@ _CITY_STOPWORDS = {
 }
 
 
+def _strip_trailing_time_words(phrase: str) -> str:
+    """Drop trailing intent/time words that leaked into a regex capture.
+
+    "москве завтра" -> "москве"; "сочи на неделю" -> "сочи".
+    """
+    words = phrase.split()
+    trailing = _CITY_STOPWORDS | {"на", "в", "во", "за", "по"}
+    while words and words[-1].lower() in trailing:
+        words.pop()
+    return " ".join(words).strip(" ,.!?")
+
+
 def _extract_city_ru(text: str) -> Optional[str]:
     m = _CITY_RE.search(text)
     if m:
-        city = m.group(1).strip()
+        city = _strip_trailing_time_words(m.group(1).strip())
         if len(city) >= 2:
             return city
     # Fallback: last word-ish
@@ -167,9 +179,9 @@ def _deg_c_ru() -> str:
 def _extract_district_ru(text: str) -> Optional[str]:
     # Very lightweight: "в районе <X>" / "район <X>"
     t = text.lower()
-    m = re.search(r"(?:в\\s+районе|район)\\s+([а-яё\\-\\s]{3,60})", t, flags=re.IGNORECASE)
+    m = re.search(r"(?:в\s+районе|район)\s+([а-яё\-\s]{3,60})", t, flags=re.IGNORECASE)
     if m:
-        val = m.group(1).strip(" ,.!?")
+        val = _strip_trailing_time_words(m.group(1).strip(" ,.!?"))
         return val if val else None
     return None
 
@@ -576,4 +588,3 @@ async def fetch_weather(
     }
     cache.set_json(cache_key, payload, ttl_seconds=ttl)
     return payload
-
