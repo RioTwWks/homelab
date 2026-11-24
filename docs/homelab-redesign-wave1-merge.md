@@ -1,20 +1,20 @@
 # Homelab redesign — волна 1 (A1–A8, без A9)
 
-Интеграционная ветка: `cursor/homelab-redesign-wave1-62e2`  
+Интеграционная ветка: `agents/homelab-redesign-wave1-62e2`  
 Заменяет отдельные draft PR #5–#7, #9–#13 одним merge в `main`.
 
 ## Рекомендуемый порядок слияния (минимизация конфликтов)
 
 | Шаг | PR | Агент | Ветка | Примечание |
 |-----|-----|-------|-------|------------|
-| 1 | #12 | A1 | `cursor/hermes-migration-skills-62e2` | **База:** Hermes skills, homelab modes UI/API, CI `hermes-tools` |
-| 2 | #5 | A4 | `cursor/opencode-ollama-setup-62e2` | Доки + `config/opencode/` (конфликт только `AGENTS.md`) |
-| 3 | #6 | A7 | `cursor/vpn-headscale-amnezia-cf-62e2` | Ansible remote access (`AGENTS.md`, `README.md`) |
-| 4 | #7 | A6 | `cursor/monitoring-grafana-npu-62e2` | Profile `monitoring`, Grafana/Prometheus |
-| 5 | #13 | A3 | `cursor/hermes-jev-hooks-62e2` | Jev hooks + CI job `hermes-jev-hooks` |
-| 6 | #9 | A2+A4 NPU | `cursor/hermes-voice-npu-stt-62e2` | Voice Ansible, FLM NPU (`Makefile`, `AGENTS.md`) |
-| 7 | #11 | A5 | `cursor/hermes-qdrant-rag-62e2` | RAG scripts, compose/env |
-| 8 | #10 | A8 | `cursor/ai-gaming-media-modes-ui-62e2` | Уже в #12 (A1); отдельный merge не даёт diff |
+| 1 | #12 | A1 | `agents/hermes-migration-skills-62e2` | **База:** Hermes skills, homelab modes UI/API, CI `hermes-tools` |
+| 2 | #5 | A4 | `agents/opencode-ollama-setup-62e2` | Доки + `config/opencode/` (конфликт только `AGENTS.md`) |
+| 3 | #6 | A7 | `agents/vpn-headscale-amnezia-cf-62e2` | Ansible remote access (`AGENTS.md`, `README.md`) |
+| 4 | #7 | A6 | `agents/monitoring-grafana-npu-62e2` | Profile `monitoring`, Grafana/Prometheus |
+| 5 | #13 | A3 | `agents/hermes-jev-hooks-62e2` | Jev hooks + CI job `hermes-jev-hooks` |
+| 6 | #9 | A2+A4 NPU | `agents/hermes-voice-npu-stt-62e2` | Voice Ansible, FLM NPU (`Makefile`, `AGENTS.md`) |
+| 7 | #11 | A5 | `agents/hermes-qdrant-rag-62e2` | RAG scripts, compose/env |
+| 8 | #10 | A8 | `agents/ai-gaming-media-modes-ui-62e2` | Уже в #12 (A1); отдельный merge не даёт diff |
 
 **Вывод:** 8 последовательных merge в main дали бы те же конфликты в `AGENTS.md`, `README.md`, `ci.yml`, `Makefile`, `docker-compose.yml`. **Один integration PR** — оптимально.
 
@@ -81,7 +81,7 @@ sudo systemctl daemon-reload
 
 ## Post-merge runbook — Agent B3 (RAG фаза 6 + modes фаза 9)
 
-Ветка проверки: `cursor/runbook-rag-modes-62e2`.
+Ветка проверки: `agents/runbook-rag-modes-62e2`.
 
 | Область | Проверка | Результат (2026-10-01) |
 |---------|----------|------------------------|

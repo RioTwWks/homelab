@@ -2,7 +2,7 @@
 
 [OpenCode](https://opencode.ai/docs) — open-source агент для терминала (TUI), который читает репозиторий, правит файлы и запускает команды. В стеке homelab он дополняет **Hermes / moltbot-api**: голос и бытовые сценарии остаются в ассистенте, а разработка и рефакторинг — в OpenCode с локальной моделью через **Ollama на хосте** (порт `11434`, как в [architecture.md](./architecture.md)).
 
-Фаза плана: [homelab redesign — фаза 5](../.cursor/plans/homelab_redesign_plan.md).
+Фаза плана: [homelab redesign — фаза 5](../.agents/plans/homelab_redesign_plan.md).
 
 ---
 

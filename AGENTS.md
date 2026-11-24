@@ -15,8 +15,8 @@
 | `hermes/` | Hermes Agent: skills + CLI (миграция с moltbot-api, фаза 1+) |
 | `docker-compose.yml` | Основной стек |
 | `docker-compose.raid*.example.yml` | **Override**, не standalone |
-| `.cursor/rules/` | Cursor project rules (`.mdc`) |
-| `.cursor/plans/` | Архитектурный план (исторический контекст) |
+| `.agents/rules/` | AI Agents project rules (`.mdc`) |
+| `.agents/plans/` | Архитектурный план (исторический контекст) |
 
 **Не путать:** `context.md` в корне — заметки из чата, не операционная документация. Ориентир: `README.md` + `docs/`.
 

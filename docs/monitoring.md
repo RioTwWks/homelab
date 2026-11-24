@@ -120,4 +120,4 @@ docker compose --profile monitoring down
 ## Связанные документы
 
 - `docs/gitlab-migration.md` — GitLab без standalone Grafana
-- `.cursor/plans/homelab_redesign_plan.md` — фаза 7
+- `.agents/plans/homelab_redesign_plan.md` — фаза 7

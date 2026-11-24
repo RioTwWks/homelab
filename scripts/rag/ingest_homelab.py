@@ -24,7 +24,7 @@ DEFAULT_ROOT_FILES = ("README.md", "AGENTS.md")
 DEFAULT_EXTENSIONS = {".md", ".py", ".sh", ".yml", ".yaml", ".toml", ".json"}
 DEFAULT_EXCLUDE_DIR_NAMES = {
     ".git", ".venv", "venv", "__pycache__", "node_modules", "dist", "build",
-    ".pytest_cache", ".cursor", "tests",
+    ".pytest_cache", ".agents", "tests",
 }
 
 
