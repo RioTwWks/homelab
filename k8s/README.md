@@ -166,6 +166,40 @@ curl -s -o /dev/null -w '%{http_code}' http://localhost:30082/status.php  # 200 
 `docker compose rm -s nextcloud nextcloud_db` (тома — не удалять до фазы 5).
 Cron-задачи в кластере выполняет sidecar (в compose их не было).
 
+### Immich (четвёртый)
+
+Чарт [immich-app/immich-charts](https://github.com/immich-app/immich-charts) БД не
+содержит — Postgres (vectorchord) разворачивается отдельным релизом app-template.
+Порядок важен: PVC библиотеки и секрет → БД → сам Immich.
+
+```bash
+kubectl apply -f k8s/namespaces/                    # namespace photos
+
+# 1. Секрет БД (в Git не хранится) + PVC библиотеки
+kubectl -n photos create secret generic immich-db \
+  --from-literal=password='<IMMICH_DB_PASSWORD из .env>'
+kubectl apply -f k8s/manifests/immich-library-pvc.yaml
+
+# 2. Версия: image.tag в k8s/values/immich.yaml должен совпадать с compose
+#    (server и ML — строго одной версии; смотреть docker images | grep immich)
+
+# 3. БД, затем Immich
+helm install immich-db oci://ghcr.io/bjw-s-labs/helm-charts/app-template \
+  --version 5.3.0 -n photos -f k8s/values/immich-db.yaml
+helm repo add immich https://immich-app.github.io/immich-charts
+helm install immich immich/immich --version 0.12.0 -n photos -f k8s/values/immich.yaml
+
+# 4. Smoke
+curl -s http://localhost:30083/api/server/ping     # {"res":"pong"}
+```
+
+Миграция данных: `docker compose stop immich-server immich-machine-learning immich_db immich_redis`,
+том `immich_upload` → rsync на PV `immich-library`; БД — `pg_dump` из контейнера
+`immich_db` → restore в под `immich-db-0`. Очередь (compose `immich_redis`) —
+stateless, в кластере её заменяет valkey с emptyDir, миграция не нужна.
+После проверки веб-UI и мобильного приложения — `docker compose rm -s` для
+сервисов профиля photos (тома не удалять до фазы 5).
+
 ## Валидация чартов
 
 ```bash

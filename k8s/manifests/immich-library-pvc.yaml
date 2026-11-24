@@ -1,0 +1,16 @@
+# Библиотека Immich (фото/видео). Создаётся вручную ДО helm install immich —
+# чарт требует existingClaim. Не входит в релиз ⇒ helm uninstall её не трогает
+# (retain по умолчанию). Данные мигрируют rsync'ом из docker-тома immich_upload.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-library
+  namespace: photos
+  labels:
+    app.kubernetes.io/part-of: immich
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 100Gi # под размер docker-тома immich_upload

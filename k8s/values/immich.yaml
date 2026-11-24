@@ -1,0 +1,84 @@
+# Immich — фаза 2 плана docs/k8s-helm-plan.md (четвёртый сервис, профиль photos).
+# Чарт: immich (immich-app) — https://github.com/immich-app/immich-charts
+#
+# Установка (порядок важен):
+#   1. k8s/manifests/immich-library-pvc.yaml + секрет immich-db (k8s/README.md)
+#   2. Postgres: helm install immich-db oci://ghcr.io/bjw-s-labs/helm-charts/app-template \
+#        --version 5.3.0 -n photos -f k8s/values/immich-db.yaml
+#   3. Immich:  helm repo add immich https://immich-app.github.io/immich-charts
+#      helm install immich immich/immich -n photos -f k8s/values/immich.yaml
+#
+# ВАЖНО: image.tag должен совпадать с версией в compose (IMMICH_VERSION/IMMICH_ML_VERSION;
+# server и machine-learning — строго одной версии). Иначе миграции БД прыгнут
+# через мажорные версии. Текущую версию смотреть: docker images | grep immich
+
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          tag: "v1.141.1" # выровнять с compose; применяется и к server, и к ML
+        env:
+          TZ: Europe/Moscow
+          UPLOAD_LOCATION: /data # как в compose
+          DB_HOSTNAME: immich-db
+          DB_PORT: "5432"
+          DB_USERNAME: postgres # как IMMICH_DB_USERNAME в .env
+          DB_DATABASE_NAME: immich
+          DB_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: immich-db # создаётся kubectl'ом (k8s/README.md)
+                key: password
+
+immich:
+  persistence:
+    library:
+      existingClaim: immich-library # k8s/manifests/immich-library-pvc.yaml
+
+# Очередь задач — в compose это redis:7-alpine без томов; valkey (redis-совместимый)
+# с emptyDir даёт паритет.
+valkey:
+  enabled: true
+
+server:
+  enabled: true
+  service:
+    main:
+      # Параллельный запуск с compose: :30083 (compose держит :18083).
+      type: NodePort
+      ports:
+        http:
+          port: 2283
+          nodePort: 30083
+  controllers:
+    main:
+      containers:
+        main:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+
+machine-learning:
+  enabled: true
+  persistence:
+    cache:
+      enabled: true
+      # в compose — том immich_ml_cache; кэш моделей переживает рестарт
+      type: persistentVolumeClaim
+      storageClass: local-path
+      accessMode: ReadWriteOnce
+      size: 10Gi
+  controllers:
+    main:
+      containers:
+        main:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi

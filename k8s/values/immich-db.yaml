@@ -1,0 +1,68 @@
+# PostgreSQL (vectorchord) для Immich — часть фазы 2 (профиль photos).
+# В compose — сервис immich_db (ghcr.io/immich-app/postgres). Чарт immich БД не
+# содержит, поэтому отдельный релиз на app-template.
+#
+# Установка:
+#   helm install immich-db oci://ghcr.io/bjw-s-labs/helm-charts/app-template \
+#     --version 5.3.0 -n photos -f k8s/values/immich-db.yaml
+# Пароль — из заранее созданного Secret immich-db (k8s/README.md).
+
+controllers:
+  main:
+    strategy: Recreate # RWO-том
+    containers:
+      main:
+        image:
+          repository: ghcr.io/immich-app/postgres
+          tag: 14-vectorchord0.4.3-pgvectors0.2.0 # как в compose
+        env:
+          TZ: Europe/Moscow
+          POSTGRES_USER: postgres
+          POSTGRES_DB: immich
+          POSTGRES_INITDB_ARGS: --data-checksums
+          POSTGRES_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: immich-db
+                key: password
+        probes:
+          liveness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command: ["pg_isready", "-U", "postgres", "-d", "immich"]
+              initialDelaySeconds: 10
+              periodSeconds: 10
+          readiness:
+            enabled: true
+            custom: true
+            spec:
+              exec:
+                command: ["pg_isready", "-U", "postgres", "-d", "immich"]
+              initialDelaySeconds: 5
+              periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+
+service:
+  main:
+    controller: main
+    ports:
+      postgres:
+        port: 5432
+
+persistence:
+  data:
+    enabled: true
+    type: persistentVolumeClaim
+    storageClass: local-path
+    accessMode: ReadWriteOnce
+    size: 20Gi # под размер docker-тома immich_db_data
+    retain: true
+    globalMounts:
+      - path: /var/lib/postgresql/data
