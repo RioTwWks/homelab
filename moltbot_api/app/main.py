@@ -182,7 +182,7 @@ def _env_web_provider() -> str:
     return os.getenv("WEB_SEARCH_PROVIDER", "off").strip().lower()
 
 
-_URL_RE = re.compile(r"https?://\\S+")
+_URL_RE = re.compile(r"https?://\S+")
 
 
 def _strip_urls(text: str) -> str:
@@ -190,8 +190,8 @@ def _strip_urls(text: str) -> str:
         return ""
     t = _URL_RE.sub("", text)
     # Collapse whitespace around removed URLs/dashes.
-    t = re.sub(r"[ \\t]+", " ", t)
-    t = re.sub(r"\\s+\\n", "\n", t)
+    t = re.sub(r"[ \t]+", " ", t)
+    t = re.sub(r"\s+\n", "\n", t)
     return t.strip()
 
 
@@ -1013,4 +1013,3 @@ async def chat_stream(req: ChatRequest):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
-
